@@ -1,0 +1,39 @@
+# Toggl API Configuration
+toggl:
+  api_base_url: "https://api.track.toggl.com/reports/api/v3"
+  timeout_seconds: 30
+  max_retries: 3
+  retry_backoff_factor: 2.0
+  toggl_rph: 240  # Requests per hour (Starter plan)
+  
+  # Pagination settings
+  page_size: 50  # Maximum allowed by Toggl
+
+# OpenAI Configuration
+openai:
+  model: "gpt-4-turbo-preview"
+  max_tokens: 4000
+  temperature: 0.3  # Lower for more factual summaries
+  timeout_seconds: 60
+  max_retries: 3
+
+# Database Configuration
+database:
+  path: "./data/toggl_cache.db"
+  backup_enabled: true
+  backup_path: "./data/backups/"
+
+# Output Configuration
+output:
+  directory: "./tmp"
+  log_level: "INFO"
+  
+# Parsing Configuration
+parsing:
+  entity_id_pattern: "#(\\d+)"
+  tag_pattern: "\\[([^\\]]+)\\]"
+  
+# Report Configuration
+reports:
+  include_metadata: true
+

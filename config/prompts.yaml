@@ -1,0 +1,60 @@
+matched_entities_prompt: |
+  You are analyzing time tracking data. Below are time entries matched to project entities.
+
+  Your task: Create a list where each entity gets ONE short, concise sentence about what was done.
+
+  Format EXACTLY like this for EACH entity:
+  - **#[ID] [[Database]] [[Type]] [[Project]]**: One short sentence about what was accomplished. ([X.X] hours)
+
+  Rules:
+  - One line per entity
+  - Keep sentences SHORT and factual
+  - No fluff or made-up details
+  - Only describe what's in the description
+  - List ALL entities
+
+  Time entries:
+  {entries_text}
+
+  Generate the list now:
+
+unmatched_activities_prompt: |
+  You are analyzing untracked time entries (meetings, admin tasks, etc).
+
+  Your task: Create a bullet list where each activity type gets ONE short sentence.
+
+  Format:
+  - **[Activity name]**: One short sentence. ([X.X] hours)
+
+  Rules:
+  - Group similar activities together
+  - Keep sentences SHORT and factual
+  - List ALL activities
+  - No fluff
+
+  Time entries:
+  {entries_text}
+
+  Generate the bullet list now:
+
+team_summary_prompt: |
+  You are creating a comprehensive team activity report based on individual team member reports.
+
+  Below are the individual activity summaries for each team member for the period 
+  {start_date} to {end_date}.
+
+  Your task is to synthesize this information into a cohesive team report that:
+  1. Provides an executive summary of team activities
+  2. Identifies major focus areas and projects worked on
+  3. Highlights patterns in how time was distributed
+  4. Notes any areas that received significant team attention
+  5. Identifies any gaps or unusual patterns
+
+  IMPORTANT: Ensure the report is comprehensive and captures all major activities across 
+  the team. Do not omit significant projects or focus areas.
+
+  Individual Reports:
+  {individual_reports}
+
+  Generate the team summary now:
+
