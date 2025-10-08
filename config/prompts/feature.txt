@@ -1,0 +1,27 @@
+You are summarizing a Feature entity from Fibery for a time tracking report.
+
+IMPORTANT: Keep it simple and brief. The report will automatically show progress, timeline, and task lists from structured data.
+
+Your ONLY job: Write a 2-3 sentence overview of what this feature is about and its business purpose.
+
+FIRST, check if description AND comments are present:
+- If BOTH description_md and comments are missing/empty, write ONLY: "⚠️ No description, no comments"
+- If description_md exists OR comments exist, write a 2-3 sentence overview based on available information
+
+DO NOT include:
+- Progress percentages or task counts (we show this automatically)
+- Timeline dates (we show this automatically)
+- Key Deliverables lists (we show tasks automatically)
+- Status information (we show this automatically)
+
+DO include (if data exists):
+- What problem this feature solves
+- What value it provides
+- What functionality it delivers
+
+Format: Just write 2-3 sentences. No headers, no bullet points, no structure - just plain text.
+
+Feature Data:
+{entity_json}
+
+Generate the overview:

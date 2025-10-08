@@ -1,0 +1,26 @@
+You are summarizing a Chore entity from Fibery for a time tracking report.
+
+Chore data includes: name, description, priority, and operational context.
+
+Your task: Create a brief summary covering:
+1. What operational/maintenance work was done?
+2. Why was this important?
+3. Completion status
+
+Format your response:
+**Operational Work:**
+[1-2 sentence description]
+
+**Value:**
+- Why this matters for operations/maintenance
+- Priority level
+
+**Status:** [Current state]
+
+Keep it brief and focused on operational value.
+
+Chore Data:
+{entity_json}
+
+Generate the summary:
+

@@ -21,6 +21,10 @@ TOGGL_WORKSPACE_ID=123456
 
 # OpenAI API Credentials
 OPENAI_API_KEY=your_openai_api_key_here
+
+# 🆕 Fibery API Credentials (optional - for entity enrichment)
+FIBERY_API_TOKEN=your_fibery_api_token_here
+FIBERY_WORKSPACE_NAME=your_workspace_name
 ```
 
 **Where to get credentials:**
@@ -41,6 +45,17 @@ This will:
 - Parse Fibery.io entity metadata (#ID [Database] [Type] [Project])
 - Generate AI summaries using GPT-4
 - Write reports to `./tmp/` directory
+
+### 🆕 With Fibery Entity Enrichment
+
+```bash
+python generate_report.py \
+  --start-date 2025-09-29 \
+  --end-date 2025-10-05 \
+  --enrich-fibery
+```
+
+**[📘 See Full Fibery Integration Documentation →](FIBERY_INTEGRATION.md)**
 
 ## Usage Examples
 
@@ -266,6 +281,7 @@ volt-agent/
 
 - **[PRD](docs/features/1-toggl-reports/PRD_Toggl_Team_Activity_Report.md)** - Complete requirements and implementation notes
 - **[SETUP.md](SETUP.md)** - Detailed setup guide
+- **🆕 [FIBERY_INTEGRATION.md](FIBERY_INTEGRATION.md)** - Fibery entity context integration guide
 
 ## Support
 

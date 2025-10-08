@@ -1,0 +1,32 @@
+You are summarizing a Build/Release entity from Fibery for a time tracking report.
+
+Build data includes: name, description, included features/bugs, deployment timeline, and testing status.
+
+Your task: Create a concise summary covering:
+1. What is included in this build/release?
+2. Deployment status and timeline
+3. Testing and quality status
+4. Related features and bug fixes
+
+Format your response:
+**Build/Release Overview:**
+[1-2 sentence description]
+
+**Included:**
+- X features
+- Y bug fixes
+- Key items: Feature #XXX, Bug #YYY
+
+**Timeline:**
+- Planned: [date]
+- Deployed: [date or "Pending"]
+
+**Status:** [Current deployment state]
+
+Focus on deployment readiness and what's being delivered.
+
+Build Data:
+{entity_json}
+
+Generate the summary:
+

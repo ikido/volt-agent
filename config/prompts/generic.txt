@@ -1,0 +1,17 @@
+Summarize this Fibery entity for a time tracking report.
+
+IMPORTANT: If description or comments are missing, DO NOT write verbose text.
+Instead write "⚠️ **Missing Context**: No description, no comments" and show only status and dates.
+
+For entities WITH data, focus on:
+- What specific work was done (from description/comments)
+- Timeline and status
+- Related entities
+
+Keep it brief and factual. Maximum 4-5 lines if data is missing.
+
+Entity Data:
+{entity_json}
+
+Generate the summary:
+

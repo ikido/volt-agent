@@ -27,20 +27,28 @@ class LLMClient:
         self.max_tokens = max_tokens
         self.temperature = temperature
     
-    def generate_summary(self, prompt: str) -> str:
-        """Generate summary using OpenAI API
+    def generate_completion(
+        self,
+        prompt: str,
+        system_prompt: Optional[str] = None
+    ) -> str:
+        """Generate completion using OpenAI API (generic method)
         
         Args:
             prompt: Prompt text
+            system_prompt: Optional system prompt (defaults to time tracking expert)
             
         Returns:
             Generated text
         """
+        if system_prompt is None:
+            system_prompt = "You are an expert at analyzing time tracking data and project management information."
+        
         try:
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
-                    {"role": "system", "content": "You are an expert at analyzing time tracking data."},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": prompt}
                 ],
                 max_tokens=self.max_tokens,
@@ -59,6 +67,17 @@ class LLMClient:
         except Exception as e:
             logger.error(f"LLM API error: {e}")
             return f"[Error generating summary: {str(e)}]"
+    
+    def generate_summary(self, prompt: str) -> str:
+        """Generate summary using OpenAI API (convenience wrapper)
+        
+        Args:
+            prompt: Prompt text
+            
+        Returns:
+            Generated text
+        """
+        return self.generate_completion(prompt)
     
     def generate_matched_summary(self, entries_text: str) -> str:
         """Generate summary for matched entities

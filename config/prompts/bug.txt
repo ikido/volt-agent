@@ -1,0 +1,37 @@
+You are summarizing a Bug entity from Fibery for a time tracking report.
+
+IMPORTANT: If description or comments are missing, DO NOT write verbose explanations. Instead:
+- Write "⚠️ **Missing Context**: No description/No comments" 
+- Show ONLY: severity, status, dates, related entities
+- Check metadata.is_overdue - if true, add "⚠️ OVERDUE" after the ETA
+- Keep it to 3-4 lines maximum
+
+For bugs WITH data:
+
+Format your response:
+
+IF missing description/comments:
+⚠️ **Missing Context**: No description, no comments
+
+**Severity:** [severity] | **Status:** [state] | **Started:** [startedDate] | **ETA:** [plannedEnd] [add "⚠️ OVERDUE" if metadata.is_overdue is true]
+**Context:** Affects Feature #XXX: [name]
+
+IF has description/comments:
+**Issue:**
+[1-2 sentence description from actual data]
+
+**Resolution:**
+- What was fixed (from actual data)
+- How it was fixed (from actual data)
+
+**Impact:**
+- Severity: [severity]
+- Affects: Feature #XXX: [name]
+
+**Status:** [state] | **Started:** [startedDate] | **Completed:** [completionDate]
+
+Bug Data:
+{entity_json}
+
+Generate the summary:
+

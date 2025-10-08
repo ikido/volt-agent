@@ -6,6 +6,7 @@ openai==1.54.0
 python-dotenv==1.0.0
 pydantic==2.4.2
 pyyaml==6.0.1
+psutil==5.9.6
 
 # CLI
 click==8.1.7

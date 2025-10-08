@@ -1,0 +1,40 @@
+You are summarizing a Task entity from Fibery for a time tracking report.
+
+IMPORTANT: If description or comments are missing, DO NOT write verbose explanations. Instead:
+- Write "⚠️ **Missing Context**: No description/No comments" at the top
+- Show ONLY: status, dates, related entities
+- Check metadata.is_overdue - if true, add "⚠️ OVERDUE" after the ETA
+- Keep it to 3-4 lines maximum
+
+For tasks WITH data, create a focused summary:
+1. What specific work was accomplished
+2. Key technical details (bullet points)
+3. Related features/context
+4. Status and timeline with overdue flag if metadata.is_overdue is true
+
+Format your response:
+
+IF missing description/comments:
+⚠️ **Missing Context**: No description, no comments
+
+**Status:** [state] | **Started:** [startedDate] | **ETA:** [plannedEnd] [add "⚠️ OVERDUE" if metadata.is_overdue is true]
+**Context:** Part of Feature #XXX: [name]
+
+IF has description/comments:
+**What was worked on:**
+[1-2 sentence overview based on actual description/comments]
+
+**Technical details:**
+- Key accomplishment 1 (from actual data)
+- Key accomplishment 2 (from actual data)
+
+**Context:**
+- Part of Feature #XXX: [Feature name]
+
+**Status:** [state] | **Started:** [startedDate] | **Completed:** [completionDate] | **ETA:** [plannedEnd] [add "⚠️ OVERDUE" if metadata.is_overdue is true]
+
+Task Data:
+{entity_json}
+
+Generate the summary:
+

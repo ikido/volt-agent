@@ -37,3 +37,157 @@ parsing:
 reports:
   include_metadata: true
 
+# Fibery Configuration
+fibery:
+  api_base_url: "https://wearevolt.fibery.io"
+  use_graphql: true  # Use GraphQL API (recommended)
+  timeout_seconds: 30
+  max_retries: 3
+  retry_backoff_factor: 2.0
+  
+  # Enrichment features
+  enrichment:
+    enabled: false  # Enable with --enrich-fibery flag
+    batch_size: 10  # Fetch entities in batches
+    max_concurrent_requests: 5
+    
+  # Analysis features
+  analysis:
+    enabled: false  # Enable with --fibery-analysis flag
+    check_open_entities: true
+    check_discrepancies: true
+    
+  # Entity type configuration
+  entity_types:
+    - storage_type: "Scrum/Task"
+      graphql_type: "Task"
+      query_function: "findTasks"
+      database: "Scrum"
+      display_name: "Task"
+      fields:
+        name: "name"
+        description: "description { md }"
+        comments: "comments { text author { name } creationDate }"
+        state: "state { name }"
+        completion_date: "completionDate"
+        started_date: "startedDate"
+        planned_end: "plannedEnd"
+        planned_start: "plannedStart"
+        time_spent: "timeSpentH"
+        feature: "feature { publicId name }"
+        assignees: "assignees { name email }"
+      prompt_template: "task"
+    
+    - storage_type: "Scrum/Bug"
+      graphql_type: "Bug"
+      query_function: "findBugs"
+      database: "Scrum"
+      display_name: "Bug"
+      fields:
+        name: "name"
+        description: "description { md }"
+        comments: "comments { text author { name } creationDate }"
+        state: "state { name }"
+        completion_date: "completionDate"
+        started_date: "startedDate"
+        severity: "severity { name }"
+        feature: "feature { publicId name }"
+        assignees: "assignees { name email }"
+      prompt_template: "bug"
+    
+    - storage_type: "Scrum/Sub-bug"
+      graphql_type: "SubBug"
+      query_function: "findSubBugs"
+      database: "Scrum"
+      display_name: "Sub-bug"
+      fields:
+        name: "name"
+        description: "description { md }"
+        comments: "comments { text author { name } creationDate }"
+        state: "state { name }"
+        bug: "bug { publicId name feature { publicId name } }"
+      prompt_template: "bug"
+    
+    - storage_type: "Scrum/Feature"
+      graphql_type: "Feature"
+      query_function: "findFeatures"
+      database: "Scrum"
+      display_name: "Feature"
+      fields:
+        name: "name"
+        description: "description { md }"
+        comments: "comments { text author { name } creationDate }"
+        state: "state { name }"
+        started_date: "devActualStartDate"
+        planned_end: "devPlannedEndDate"
+        completion_date: "devActualEndDate"
+        actual_release_date: "actualReleaseDate"
+        planned_release_date: "plannedReleaseDate"
+        tasks_time_spent: "tasksTimeSpent"
+        feature_time_spent: "featureTimeSpentH"
+        tasks: "tasks { publicId name state { name } completionDate startedDate plannedEnd assignees { name } timeSpentH }"
+        bugs: "bugs { publicId name state { name } }"
+      prompt_template: "feature"
+    
+    - storage_type: "Scrum/Build"
+      graphql_type: "Build"
+      query_function: "findBuilds"
+      database: "Scrum"
+      display_name: "Build"
+      fields:
+        name: "name"
+        description: "description { md }"
+        comments: "comments { text author { name } creationDate }"
+        state: "state { name }"
+        deployment_date: "deploymentDate"
+        features: "features { publicId name }"
+        bugs: "bugs { publicId name }"
+      prompt_template: "build"
+    
+    - storage_type: "Scrum/Sub-task"
+      graphql_type: "SubTask"
+      query_function: "findSubTasks"
+      database: "Scrum"
+      display_name: "Sub-task"
+      fields:
+        name: "name"
+        description: "description { md }"
+        state: "state { name }"
+        completion_date: "completedDate"
+        started_date: "startedDate"
+        time_spent: "timeSpentH"
+        task: "task { publicId name feature { publicId name } }"
+      prompt_template: "task"
+    
+    - storage_type: "Scrum/Chore"
+      graphql_type: "Chore"
+      query_function: "findChores"
+      database: "Scrum"
+      display_name: "Chore"
+      fields:
+        name: "name"
+        description: "description { md }"
+        comments: "comments { text author { name } creationDate }"
+        state: "state { name }"
+        completion_date: "completionDate"
+        started_date: "startedDate"
+        priority: "priority { name }"
+      prompt_template: "chore"
+    
+  # Schema discovery and validation
+  schema:
+    auto_discover: true
+    validate_on_start: true
+    warn_on_unknown_types: true
+    cache_schema: true
+    cache_ttl_hours: 24
+    
+  # Caching
+  cache:
+    enabled: true
+    schema_ttl_hours: 24
+    entity_ttl_hours: 1
+    user_ttl_hours: 24
+    cache_path: "./data/fibery_cache/"
+    force_refresh: false
+

@@ -254,6 +254,153 @@ class Database:
         self.conn.commit()
         logger.info(f"Saved {report_type} report for run {run_id}")
     
+    def upsert_fibery_users(self, users: List[Dict[str, Any]]) -> int:
+        """Upsert Fibery users
+        
+        Args:
+            users: List of Fibery user dictionaries
+            
+        Returns:
+            Number of users processed
+        """
+        cursor = self.conn.cursor()
+        count = 0
+        
+        for user in users:
+            cursor.execute("""
+                INSERT INTO fibery_users 
+                (fibery_id, email, name, role, is_active, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+                ON CONFLICT(fibery_id) DO UPDATE SET
+                    email = excluded.email,
+                    name = excluded.name,
+                    role = excluded.role,
+                    is_active = excluded.is_active,
+                    updated_at = excluded.updated_at
+            """, (
+                user.get('fibery_id'),
+                user.get('email'),
+                user.get('name'),
+                user.get('role'),
+                user.get('is_active', True),
+                datetime.now().isoformat()
+            ))
+            count += 1
+        
+        self.conn.commit()
+        logger.info(f"Upserted {count} Fibery users")
+        return count
+    
+    def get_fibery_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
+        """Get Fibery user by email
+        
+        Args:
+            email: User email
+            
+        Returns:
+            User dictionary or None if not found
+        """
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            SELECT * FROM fibery_users WHERE email = ?
+        """, (email,))
+        
+        row = cursor.fetchone()
+        return dict(row) if row else None
+    
+    def upsert_fibery_entity(self, entity: Dict[str, Any]) -> None:
+        """Upsert a single Fibery entity
+        
+        Args:
+            entity: Entity dictionary with required fields
+        """
+        cursor = self.conn.cursor()
+        
+        cursor.execute("""
+            INSERT INTO fibery_entities 
+            (fibery_id, public_id, entity_type, entity_name, description_md, 
+             comments, metadata, summary_md, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(fibery_id) DO UPDATE SET
+                public_id = excluded.public_id,
+                entity_type = excluded.entity_type,
+                entity_name = excluded.entity_name,
+                description_md = excluded.description_md,
+                comments = excluded.comments,
+                metadata = excluded.metadata,
+                summary_md = excluded.summary_md,
+                updated_at = excluded.updated_at
+        """, (
+            entity.get('fibery_id'),
+            entity.get('public_id'),
+            entity.get('entity_type'),
+            entity.get('entity_name'),
+            entity.get('description_md'),
+            json.dumps(entity.get('comments', [])),
+            json.dumps(entity.get('metadata', {})),
+            entity.get('summary_md'),
+            datetime.now().isoformat()
+        ))
+        
+        self.conn.commit()
+        logger.debug(f"Upserted entity #{entity.get('public_id')}")
+    
+    def get_fibery_entity_by_public_id(self, public_id: str) -> Optional[Dict[str, Any]]:
+        """Get Fibery entity by public ID
+        
+        Args:
+            public_id: Public ID (e.g., "7658")
+            
+        Returns:
+            Entity dictionary or None if not found
+        """
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            SELECT * FROM fibery_entities WHERE public_id = ?
+        """, (public_id,))
+        
+        row = cursor.fetchone()
+        if row:
+            entity = dict(row)
+            # Parse JSON fields
+            entity['comments'] = json.loads(entity.get('comments', '[]'))
+            entity['metadata'] = json.loads(entity.get('metadata', '{}'))
+            return entity
+        return None
+    
+    def get_fibery_entity_summary(self, public_id: str) -> Optional[str]:
+        """Get cached summary for an entity
+        
+        Args:
+            public_id: Public ID (e.g., "7658")
+            
+        Returns:
+            Summary markdown or None if not found
+        """
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            SELECT summary_md FROM fibery_entities WHERE public_id = ?
+        """, (public_id,))
+        
+        row = cursor.fetchone()
+        return row['summary_md'] if row else None
+    
+    def update_fibery_entity_summary(self, public_id: str, summary_md: str) -> None:
+        """Update entity summary
+        
+        Args:
+            public_id: Public ID (e.g., "7658")
+            summary_md: Summary markdown
+        """
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            UPDATE fibery_entities SET summary_md = ?, updated_at = ?
+            WHERE public_id = ?
+        """, (summary_md, datetime.now().isoformat(), public_id))
+        
+        self.conn.commit()
+        logger.debug(f"Updated summary for entity #{public_id}")
+    
     def close(self):
         """Close database connection"""
         if self.conn:

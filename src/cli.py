@@ -49,19 +49,44 @@ import logging
     default='INFO',
     help='Logging level'
 )
-def main(start_date, end_date, users, use_cache, config, output_dir, log_level):
+@click.option(
+    '--enrich-fibery',
+    is_flag=True,
+    default=False,
+    help='Enable Fibery entity enrichment (fetch entity context from Fibery)'
+)
+@click.option(
+    '--fibery-analysis',
+    is_flag=True,
+    default=False,
+    help='Enable work alignment analysis (compare Toggl and Fibery)'
+)
+@click.option(
+    '--skip-summarization',
+    is_flag=True,
+    default=False,
+    help='Skip LLM summarization (dev mode - faster, no OpenAI costs)'
+)
+def main(start_date, end_date, users, use_cache, config, output_dir, log_level, 
+         enrich_fibery, fibery_analysis, skip_summarization):
     """Generate team activity reports from Toggl time tracking data.
     
     Examples:
     
-    # Generate report for all users
+    # Generate basic report for all users
     python generate_report.py --start-date 2025-09-23 --end-date 2025-09-29
+    
+    # Generate report with Fibery enrichment
+    python generate_report.py --start-date 2025-09-23 --end-date 2025-09-29 --enrich-fibery
+    
+    # Full analysis including discrepancy detection
+    python generate_report.py --start-date 2025-09-23 --end-date 2025-09-29 --enrich-fibery --fibery-analysis
     
     # Generate report for specific users
     python generate_report.py --start-date 2025-09-23 --end-date 2025-09-29 --users user1@example.com,user2@example.com
     
     # Use cached data (development mode)
-    python generate_report.py --start-date 2025-09-23 --end-date 2025-09-29 --use-cache
+    python generate_report.py --start-date 2025-09-23 --end-date 2025-09-29 --use-cache --enrich-fibery
     """
     from .main import run_report_generation
     
@@ -77,7 +102,10 @@ def main(start_date, end_date, users, use_cache, config, output_dir, log_level):
             use_cache=use_cache,
             config_path=config,
             output_dir=output_dir,
-            log_level=log_level
+            log_level=log_level,
+            enrich_fibery=enrich_fibery,
+            fibery_analysis=fibery_analysis,
+            skip_summarization=skip_summarization
         )
     except Exception as e:
         click.echo(f"✗ Error: {e}", err=True)
