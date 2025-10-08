@@ -1,0 +1,82 @@
+[
+  {
+    "workflow/state": {
+      "enum/name": "Done"
+    },
+    "Scrum/Name": "Migrate TP requests to Fibery",
+    "fibery/public-id": "3",
+    "fibery/id": "fd987b00-9f88-11ec-a7b5-2571b80ca0b6"
+  },
+  {
+    "workflow/state": {
+      "enum/name": "Done"
+    },
+    "Scrum/Name": "Accounting onbording",
+    "fibery/public-id": "6",
+    "fibery/id": "6210dc20-a386-11ec-a9e7-09fa13169b22"
+  },
+  {
+    "workflow/state": {
+      "enum/name": "Done"
+    },
+    "Scrum/Name": "Analyse master list logic",
+    "fibery/public-id": "8",
+    "fibery/id": "7729c570-a3bf-11ec-8a32-afa65834467c"
+  },
+  {
+    "workflow/state": {
+      "enum/name": "Done"
+    },
+    "Scrum/Name": "Accounting onboarding for Dmitry",
+    "fibery/public-id": "9",
+    "fibery/id": "7dd058d0-a3bf-11ec-8a32-afa65834467c"
+  },
+  {
+    "workflow/state": {
+      "enum/name": "Done"
+    },
+    "Scrum/Name": "Continue: Research data loading using new sync schema",
+    "fibery/public-id": "12",
+    "fibery/id": "9e57d980-a427-11ec-8a32-afa65834467c"
+  },
+  {
+    "workflow/state": {
+      "enum/name": "Done"
+    },
+    "Scrum/Name": "Incremental sync prototype with new sync schema",
+    "fibery/public-id": "13",
+    "fibery/id": "ba4a15e0-a427-11ec-8a32-afa65834467c"
+  },
+  {
+    "workflow/state": {
+      "enum/name": "Done"
+    },
+    "Scrum/Name": "Continue: Downloading deal report from UI",
+    "fibery/public-id": "14",
+    "fibery/id": "0017a740-a428-11ec-8a32-afa65834467c"
+  },
+  {
+    "workflow/state": {
+      "enum/name": "Done"
+    },
+    "Scrum/Name": "Continue: Merge chats when companies will merged",
+    "fibery/public-id": "15",
+    "fibery/id": "4d36d910-a428-11ec-8a32-afa65834467c"
+  },
+  {
+    "workflow/state": {
+      "enum/name": "Done"
+    },
+    "Scrum/Name": "Continue: Note attachments (with GDrive picker)",
+    "fibery/public-id": "16",
+    "fibery/id": "6a901f80-a428-11ec-8a32-afa65834467c"
+  },
+  {
+    "workflow/state": {
+      "enum/name": "Done"
+    },
+    "Scrum/Name": "Change company search",
+    "fibery/public-id": "17",
+    "fibery/id": "21723530-a429-11ec-8a32-afa65834467c"
+  }
+]

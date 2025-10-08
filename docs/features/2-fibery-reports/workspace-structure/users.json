@@ -1,0 +1,507 @@
+[
+  {
+    "user/email": "alex.ponomarev@wearevolt.com",
+    "fibery/id": "d2d1bb0c-55fb-474a-8fae-c42f6e5f7363",
+    "user/name": "Alex Ponomarev"
+  },
+  {
+    "user/email": "ikidoit@gmail.com",
+    "fibery/id": "52e6d5ab-bbae-4ae6-b05a-7f8f51bf97b0",
+    "user/name": "Ikidoit"
+  },
+  {
+    "user/email": "ksenia.svetlichnaya@wearevolt.com",
+    "fibery/id": "d73b57e0-7f4b-4166-867d-d835df638675",
+    "user/name": "Ksenia Svetlichnaya"
+  },
+  {
+    "user/email": "dmitriy.legkov@wearevolt.com",
+    "fibery/id": "fed34024-ae76-416b-8402-3ca31383d6a5",
+    "user/name": "Dmitriy Legkov"
+  },
+  {
+    "user/email": "dmitri.nikiforov@wearevolt.com",
+    "fibery/id": "b915a7f0-d532-48db-b980-41c392505bbe",
+    "user/name": "Dmitry Nikiforov"
+  },
+  {
+    "user/email": "ivan.kuzmin@wearevolt.com",
+    "fibery/id": "ccbe72e1-7add-4504-9a13-1eda0695c755",
+    "user/name": "Ivan Kuzmin"
+  },
+  {
+    "user/email": "sergey.likhachev@wearevolt.com",
+    "fibery/id": "f5b9d43c-6529-4f47-ab45-1607bdcc774b",
+    "user/name": "Sergey Likhachev"
+  },
+  {
+    "user/email": "roman.pogorelov@wearevolt.com",
+    "fibery/id": "07251099-6ee4-4baa-be68-4fc2976819b7",
+    "user/name": "Roman Pogorelov"
+  },
+  {
+    "user/email": "no-reply@wearevolt.com",
+    "fibery/id": "add2970c-8910-4722-8841-fadb000c28a0",
+    "user/name": "Fibery bot"
+  },
+  {
+    "user/email": "dmitriy.tulchinskiy@wearevolt.com",
+    "fibery/id": "0fe49e4d-58b0-497e-be12-926dc2fb8280",
+    "user/name": "Dmitriy Tulchinskiy"
+  },
+  {
+    "user/email": "alexander.prozorov@wearevolt.com",
+    "fibery/id": "937a2a63-0d62-43c9-b3ba-3230b102b49d",
+    "user/name": "Alexander Prozorov"
+  },
+  {
+    "user/email": "alexander.puchkov@wearevolt.com",
+    "fibery/id": "0c23ec6e-9014-412b-912f-23cdc6b5e1cf",
+    "user/name": "Alexander Puchkov"
+  },
+  {
+    "user/email": "olga.kuhach@wearevolt.com",
+    "fibery/id": "407c5741-022b-4b0e-bea3-1810e07c5c09",
+    "user/name": "Olga Kuhach"
+  },
+  {
+    "user/email": "elia.dreytser@wearevolt.com",
+    "fibery/id": "560faf3b-1801-4533-918f-078ee255bbe2",
+    "user/name": "Elia Dreytser"
+  },
+  {
+    "user/email": "vyacheslav.voytovich@wearevolt.com",
+    "fibery/id": "77315d95-f88b-4b69-8afd-bac45d97edd2",
+    "user/name": "Vyacheslav Voytovich"
+  },
+  {
+    "user/email": "victor.zagorski@wearevolt.com",
+    "fibery/id": "ab7235ca-bdfc-49af-b0a4-74f47762858e",
+    "user/name": "Victor Zagorski"
+  },
+  {
+    "user/email": "dmitry.babenko@wearevolt.com",
+    "fibery/id": "c1d3d1f4-bdad-4358-bce7-f3d3aa831d34",
+    "user/name": "Dmitry Babenko"
+  },
+  {
+    "user/email": "danila.migachev@wearevolt.com",
+    "fibery/id": "cdc479bb-3981-49ee-bc22-5f30295c668a",
+    "user/name": "Danila Migachev"
+  },
+  {
+    "user/email": "nikita.luparev@wearevolt.com",
+    "fibery/id": "dbf6b2fe-218b-41f8-ae38-821362eb5bdc",
+    "user/name": "Nikita Luparev"
+  },
+  {
+    "user/email": "david@crossclear.com",
+    "fibery/id": "ad64b96f-d559-4e96-9874-04a8315edcb9",
+    "user/name": "David"
+  },
+  {
+    "user/email": "svetlichnayaksenia@gmail.com",
+    "fibery/id": "e96dfa51-5e2e-49a7-81cd-da97b6feffb9",
+    "user/name": "svetlichnayaksenia@gmail.com"
+  },
+  {
+    "user/email": "katerina.ivanova@wearevolt.com",
+    "fibery/id": "a90e8ede-9dd6-45b0-b907-a752818b89b7",
+    "user/name": "Katerina Ivanova"
+  },
+  {
+    "user/email": "evgeniy.yuryev@wearevolt.com",
+    "fibery/id": "0d958368-9745-45d8-99fb-3b07302847d1",
+    "user/name": "Evgeniy Yuryev"
+  },
+  {
+    "user/email": "alexander.tverdikov@wearevolt.com",
+    "fibery/id": "04227289-b1d0-4d6d-9ffc-3992ee4c41a1",
+    "user/name": "Alexander Tverdikov"
+  },
+  {
+    "user/email": "artem.krivobok@wearevolt.com",
+    "fibery/id": "88c1457e-2ebc-4582-9f36-7f57400f5611",
+    "user/name": "Artem Krivobok"
+  },
+  {
+    "user/email": "andrey.mamchich@wearevolt.com",
+    "fibery/id": "9562c2fe-d1e6-45ff-8e76-a3a5ddcd0e59",
+    "user/name": "Andrey Mamchich"
+  },
+  {
+    "user/email": "artem.pokutnii@wearevolt.com",
+    "fibery/id": "9eb1ac84-8a31-424f-a4f9-c4bb1cd66596",
+    "user/name": "Artem Pokutnii"
+  },
+  {
+    "user/email": "eldar.iskhakov@wearevolt.com",
+    "fibery/id": "a18569dd-665f-405b-acbe-487af708b8f6",
+    "user/name": "Eldar Iskhakov"
+  },
+  {
+    "user/email": "alisa.chen@wearevolt.com",
+    "fibery/id": "ce7b9610-cbc2-471f-8f91-80a0d352b235",
+    "user/name": "Alisa Chen"
+  },
+  {
+    "user/email": "antonina.kasyanikova@wearevolt.com",
+    "fibery/id": "e6b2fd4f-213b-46d4-8ce8-6f8de3b52a90",
+    "user/name": "Antonina Kasyanikova"
+  },
+  {
+    "user/email": "pavel.kosicin@wearevolt.com",
+    "fibery/id": "0ea4c829-e858-4fd9-af7f-bc8115cf7438",
+    "user/name": "Pavel Kosicin"
+  },
+  {
+    "user/email": "konstantin.kostylev@wearevolt.com",
+    "fibery/id": "39e3b4cb-581d-4814-85c4-53f3a16b5536",
+    "user/name": "Konstantin Kostylev"
+  },
+  {
+    "user/email": "evgeny.martynov@wearevolt.com",
+    "fibery/id": "4d12ddbe-b9be-4736-b43d-3d4d31e3cd1e",
+    "user/name": "Evgeny Martynov"
+  },
+  {
+    "user/email": "evgeniy.kritskiy@wearevolt.com",
+    "fibery/id": "5153191e-1fa9-4195-9a53-ccaa566cee9f",
+    "user/name": "Evgeniy Kritskiy"
+  },
+  {
+    "user/email": "nikolay.popov@wearevolt.com",
+    "fibery/id": "b92e16e6-ce34-4879-a9e0-bc3abc5a6d8e",
+    "user/name": "Nikolay Popov"
+  },
+  {
+    "user/email": "kirill.lomanov@wearevolt.com",
+    "fibery/id": "da145a83-d6d4-4a98-86ca-cfd4b5808ed7",
+    "user/name": "Kirill Lomanov"
+  },
+  {
+    "user/email": "koremin@wearevolt.com",
+    "fibery/id": "e8f2d97a-3c7a-4014-8bce-b9d92cf2d5d2",
+    "user/name": "Konstantin Koremin"
+  },
+  {
+    "user/email": "ruslan.khabibulin@wearevolt.com",
+    "fibery/id": "6c1e33f7-8522-4783-af16-9b21e87ae43c",
+    "user/name": "Ruslan Khabibulin"
+  },
+  {
+    "user/email": "stanislav.kulik@wearevolt.com",
+    "fibery/id": "90c0fcca-8e7e-42c5-8c09-8a505bed9612",
+    "user/name": "Stanislav Kulik"
+  },
+  {
+    "user/email": "vadim.shamigulov@wearevolt.com",
+    "fibery/id": "a0d2c4b0-3d84-4643-bffa-b161e36df4bb",
+    "user/name": "Vadim Shamigulov"
+  },
+  {
+    "user/email": "polina.kulagina@wearevolt.com",
+    "fibery/id": "c0d2668b-de04-4281-9e5a-6013a9528194",
+    "user/name": "Polina Kulagina"
+  },
+  {
+    "user/email": "stefania.savchenko@wearevolt.com",
+    "fibery/id": "c2c27137-75b3-48fa-8c70-d712377f6954",
+    "user/name": "Stefania Savchenko"
+  },
+  {
+    "user/email": "ruslan.khayrullin@wearevolt.com",
+    "fibery/id": "c72569db-5a38-4e83-ad4f-5d3945b06760",
+    "user/name": "Ruslan Khayrullin"
+  },
+  {
+    "user/email": "tatyana.prozorova@wearevolt.com",
+    "fibery/id": "cc4ee35f-4208-4e64-aafd-951af2e0f381",
+    "user/name": "Tatyana Prozorova"
+  },
+  {
+    "user/email": "victoria.gorshkova@wearevolt.com",
+    "fibery/id": "3f828cb2-a45d-4b4a-bb1c-f2f2e46fa513",
+    "user/name": "Victoria Gorshkova"
+  },
+  {
+    "user/email": "vitaliy.pshonnov@wearevolt.com",
+    "fibery/id": "41a1796f-ee47-44f2-bd9e-8c6b5c10cc06",
+    "user/name": "Vitaliy Pshonnov"
+  },
+  {
+    "user/email": "zulkar.bedelbaev@wearevolt.com",
+    "fibery/id": "6fe84bbd-8239-4926-a08a-d5d573bfaef4",
+    "user/name": "Zulkar Bedelbaev"
+  },
+  {
+    "user/email": "yuliya.solop@wearevolt.com",
+    "fibery/id": "86c6e740-4b75-4b34-beb7-4a73bf0d2ed2",
+    "user/name": "Yuliya Solop"
+  },
+  {
+    "user/email": "yuriy.lysov@wearevolt.com",
+    "fibery/id": "9b2e6302-9dd1-4d6c-ad66-8f383469a083",
+    "user/name": "Yuriy Lysov"
+  },
+  {
+    "user/email": "yulianna.tenisheva@wearevolt.com",
+    "fibery/id": "481a4bf6-22fb-46d6-b30d-261f542e6600",
+    "user/name": "Yulianna Tenisheva"
+  },
+  {
+    "user/email": "irina.vyalova@wearevolt.com",
+    "fibery/id": "415ab7ab-4e39-45df-b01c-932ebe5751e5",
+    "user/name": "Irina Vyalova"
+  },
+  {
+    "user/email": "nina.zhukova@wearevolt.com",
+    "fibery/id": "e3d5a70d-3a3d-48a4-9b78-0c3f05d71448",
+    "user/name": "Nina Zhukova"
+  },
+  {
+    "user/email": "snezhana.zagorskaya@wearevolt.com",
+    "fibery/id": "c82b0934-9a05-42de-a9c2-e4e05932cfc0",
+    "user/name": "Snezhana Zagorskaya"
+  },
+  {
+    "user/email": "dmitriy.serebryakov@wearevolt.com",
+    "fibery/id": "1c0d0b7d-d400-468c-8966-9d7b113cc138",
+    "user/name": "Dmitriy Serebryakov"
+  },
+  {
+    "user/email": "guzel.khamzina@wearevolt.com",
+    "fibery/id": "c4efea9c-1d9e-49db-bf40-e7e113e48fe4",
+    "user/name": "Guzel Khamzina"
+  },
+  {
+    "user/email": "maksim.lubimov@wearevolt.com",
+    "fibery/id": "aadf5ac0-6b33-4133-a3eb-492d942ece0d",
+    "user/name": "Maksim Lubimov"
+  },
+  {
+    "user/email": "ilya.didenko@wearevolt.com",
+    "fibery/id": "80221629-7477-4136-9428-fa4952f7cbc0",
+    "user/name": "Ilya Didenko"
+  },
+  {
+    "user/email": "natalia.belan@wearevolt.com",
+    "fibery/id": "b2ce11b5-3087-4578-ac61-564d6d089a5d",
+    "user/name": "Natalia Belan"
+  },
+  {
+    "user/email": "alexey.efimov@wearevolt.com",
+    "fibery/id": "9c24b59d-7666-4049-a030-71a24463133c",
+    "user/name": "Alexey Efimov"
+  },
+  {
+    "user/email": "anna.palekhova@wearevolt.com",
+    "fibery/id": "1c8a5e65-6a70-4d39-a203-e3afc4727fe7",
+    "user/name": "Anna Palekhova"
+  },
+  {
+    "user/email": "nikolay.belov@wearevolt.com",
+    "fibery/id": "7daab6c9-83f8-46b7-a019-4cd164d74494",
+    "user/name": "Nikolay Belov"
+  },
+  {
+    "user/email": "maksim.vasilyev@wearevolt.com",
+    "fibery/id": "548432fc-33d8-4aa5-bc3d-76670d79783d",
+    "user/name": "Maksim Vasilyev"
+  },
+  {
+    "user/email": "alla.brandukova@wearevolt.com",
+    "fibery/id": "e017aaa6-38ab-4ced-9508-0e2930968451",
+    "user/name": "Alla Brandukova"
+  },
+  {
+    "user/email": "nikolay.kolesnikov@wearevolt.com",
+    "fibery/id": "27d36de5-f6ef-41bc-8e93-97ff5bc7e1b1",
+    "user/name": "Nikolay Kolesnikov"
+  },
+  {
+    "user/email": "irina.parmon@wearevolt.com",
+    "fibery/id": "813ad5a6-9668-4380-859c-752054c4db9e",
+    "user/name": "Irina Parmon"
+  },
+  {
+    "user/email": "victoria.rusnak@wearevolt.com",
+    "fibery/id": "bad573d3-2ba8-496c-ace3-495d1ca10afd",
+    "user/name": "Victoria Rusnak"
+  },
+  {
+    "user/email": "irina.malikova@wearevolt.com",
+    "fibery/id": "12137201-7067-4765-bf7e-69a6eb39dff8",
+    "user/name": "Irina Malikova"
+  },
+  {
+    "user/email": "aida.adzhieva@wearevolt.com",
+    "fibery/id": "4ba48118-0238-4b35-8c81-087afa7d9954",
+    "user/name": "Aida Adzhieva"
+  },
+  {
+    "user/email": "alina.avdienko@wearevolt.com",
+    "fibery/id": "82aae1a8-ab9c-4384-afde-4dd7d5b8485b",
+    "user/name": "Alina Avdienko"
+  },
+  {
+    "user/email": "ekaterina.derksen@wearevolt.com",
+    "fibery/id": "02623888-42b0-4b7f-80e4-42578af7fdcc",
+    "user/name": "Ekaterina Derksen"
+  },
+  {
+    "user/email": "daniil.popov@wearevolt.com",
+    "fibery/id": "b6233c83-29d6-440d-b2ec-f2841a56c270",
+    "user/name": "Daniil Popov"
+  },
+  {
+    "user/email": "olesya.lubyanetskaya@wearevolt.com",
+    "fibery/id": "ebb8d411-5581-4adf-be68-2c64b7993ba6",
+    "user/name": "Olesya Lubyanetskaya"
+  },
+  {
+    "user/email": "artem.petrov@wearevolt.com",
+    "fibery/id": "2f669ec2-7b17-48c2-b13c-cb00be596663",
+    "user/name": "Artem Petrov"
+  },
+  {
+    "user/email": "anton.potapov@wearevolt.com",
+    "fibery/id": "452fc489-60c7-410a-b6e7-c1fa560b1198",
+    "user/name": "Anton Potapov"
+  },
+  {
+    "user/email": "vitaly.barikhashvili@wearevolt.com",
+    "fibery/id": "6b4d2d51-2572-4429-81be-ec7a5a72c465",
+    "user/name": "Vitaly Barikhashvili"
+  },
+  {
+    "user/email": "sonja.kozic@konceptek.co",
+    "fibery/id": "3799acdf-6a63-4645-988b-1b03629371ff",
+    "user/name": "Sonja Kozic"
+  },
+  {
+    "user/email": "alina.teterkina@wearevolt.com",
+    "fibery/id": "ae075140-4445-40e1-9a3b-bf09ab6b4e7f",
+    "user/name": "Alina Teterkina"
+  },
+  {
+    "user/email": "nikolay.bogatyrev@wearevolt.com",
+    "fibery/id": "80e6b3a1-b350-4942-b260-c570fe2ebf93",
+    "user/name": "Nikolay Bogatyrev"
+  },
+  {
+    "user/email": "dmitriy.fedotov@wearevolt.com",
+    "fibery/id": "336a90a7-b9df-4eb2-8033-f4bc427b9869",
+    "user/name": "Dmitriy Fedotov"
+  },
+  {
+    "user/email": "alex.akilin@wearevolt.com",
+    "fibery/id": "d9e57730-0b2e-11ef-8a5b-4d81ddde20ae",
+    "user/name": "Alex Akilin"
+  },
+  {
+    "user/email": "yulia.plotnikova@wearevolt.com",
+    "fibery/id": "c9dcc5f0-10ec-11ef-9b2c-4fb8e36b3ff9",
+    "user/name": "Yulia Plotnikova"
+  },
+  {
+    "user/email": "vladimir.pukkonen@wearevolt.com",
+    "fibery/id": "c9dcc5f1-10ec-11ef-9b2c-4fb8e36b3ff9",
+    "user/name": "Vladimir Pukkonen"
+  },
+  {
+    "user/email": "alexandra.nosnicina@wearevolt.com",
+    "fibery/id": "e13a9470-2695-11ef-bb80-0d0d054e6761",
+    "user/name": "Alexandra Nosnicina"
+  },
+  {
+    "user/email": "ekaterina.kornilova@wearevolt.com",
+    "fibery/id": "0be93c60-2be3-11ef-881d-bb74ffd1cdb5",
+    "user/name": "Ekaterina Kornilova"
+  },
+  {
+    "user/email": "alla.vakulenko@wearevolt.com",
+    "fibery/id": "3a836410-3f8e-11ef-8568-413519e32a38",
+    "user/name": "Alla Vakulenko"
+  },
+  {
+    "user/email": "nikolay@ribbitcap.com",
+    "fibery/id": "489837a0-4520-11ef-b86b-a13c3234e9af",
+    "user/name": "nikolay@ribbitcap.com"
+  },
+  {
+    "user/email": "andrey.kurbatov@wearevolt.com",
+    "fibery/id": "459459d0-5a92-11ef-b10b-9f6b5f9154ef",
+    "user/name": "Andrey Kurbatov"
+  },
+  {
+    "user/email": "borislav.novikov@wearevolt.com",
+    "fibery/id": "874c4a30-5d77-11ef-b3a1-4b53254f4323",
+    "user/name": "Borislav Novikov"
+  },
+  {
+    "user/email": "vasily.shtobbe@wearevolt.com",
+    "fibery/id": "23045ca0-740d-11ef-8ff2-4de6ca3de212",
+    "user/name": "Vasily Shtobbe"
+  },
+  {
+    "user/email": "kirill.rapoport@wearevolt.com",
+    "fibery/id": "3e3f8d80-797d-11ef-af6d-7fcd66d2b7aa",
+    "user/name": "Kirill Rapoport"
+  },
+  {
+    "user/email": "anastasia.semeniv@wearevolt.com",
+    "fibery/id": "a1255c50-798b-11ef-be09-a5402cb680cd",
+    "user/name": "Anastasia Semeniv"
+  },
+  {
+    "user/email": "valery.zabrodin@wearevolt.com",
+    "fibery/id": "233eeee0-7fe5-11ef-9eaf-750d03f0adfc",
+    "user/name": "Valery Zabrodin"
+  },
+  {
+    "user/email": "liubov.mosunova@wearevolt.com",
+    "fibery/id": "1dc53c50-87f4-11ef-bed0-d59f7190e930",
+    "user/name": "Liubov Mosunova"
+  },
+  {
+    "user/email": "julia.lisunova@konceptek.co",
+    "fibery/id": "720c4e40-b0ab-11ef-9e29-6bd707706b69",
+    "user/name": "Julia Lisunova"
+  },
+  {
+    "user/email": "yulia.volgina@wearevolt.com",
+    "fibery/id": "332c7aa0-b1d8-11ef-886c-41f407ad5ce4",
+    "user/name": "Yulia Volgina"
+  },
+  {
+    "user/email": "alexey.raldugin@wearevolt.com",
+    "fibery/id": "793664a0-d188-11ef-b54b-b7cad258b2d5",
+    "user/name": "Alexey Raldugin"
+  },
+  {
+    "user/email": "alexey.klimenko@wearevolt.com",
+    "fibery/id": "b18a23b0-d1b9-11ef-9e8b-bf09c2f3ef4e",
+    "user/name": "Alexey Klimenko"
+  },
+  {
+    "user/email": "stanislav.ranguelov@wearevolt.com",
+    "fibery/id": "40689660-fa92-11ef-9029-d962bad790ae",
+    "user/name": "Stanislav Ranguelov"
+  },
+  {
+    "user/email": "test@wearevolt.com",
+    "fibery/id": "11f49830-031e-11f0-9088-759a8b3be2bc",
+    "user/name": "Test"
+  },
+  {
+    "user/email": "maria.kotliarova@wearevolt.com",
+    "fibery/id": "14808080-0fd2-11f0-aa6d-196ea4619044",
+    "user/name": "Maria Kotliarova"
+  },
+  {
+    "user/email": "yulia.vetkina@wearevolt.com",
+    "fibery/id": "280facb0-1b68-11f0-a33b-ed3a2496d585",
+    "user/name": "Yulia Vetkina"
+  }
+]

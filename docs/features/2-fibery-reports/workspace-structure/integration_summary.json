@@ -1,0 +1,108 @@
+{
+  "workspace": "wearevolt.fibery.io",
+  "total_databases": 20,
+  "total_entity_types": 177,
+  "total_users": 101,
+  "key_databases": [
+    {
+      "name": "Scrum",
+      "entity_count": 52,
+      "description": "Main development workflow"
+    },
+    {
+      "name": "Product Management",
+      "entity_count": 13,
+      "description": "User requests and feedback"
+    },
+    {
+      "name": "Design",
+      "entity_count": 13,
+      "description": "Design features and work versions"
+    },
+    {
+      "name": "Test Cases",
+      "entity_count": 12,
+      "description": "QA test management"
+    },
+    {
+      "name": "User Database",
+      "entity_count": 4,
+      "description": "Team structure"
+    }
+  ],
+  "main_entity_types": {
+    "Scrum/Task": {
+      "fields_count": 99,
+      "name_field": "Scrum/Name",
+      "description_field": "Scrum/Description",
+      "state_field": "workflow/state",
+      "date_fields": [
+        "fibery/creation-date",
+        "fibery/modification-date",
+        "Scrum/Completion Date",
+        "Scrum/Started Date",
+        "Scrum/Planned End",
+        "Scrum/Planned Start"
+      ]
+    },
+    "Scrum/Bug": {
+      "fields_count": 81,
+      "name_field": "Scrum/name",
+      "description_field": "Scrum/description",
+      "state_field": "workflow/state",
+      "date_fields": [
+        "Scrum/Completion Date",
+        "Scrum/Started Date",
+        "Scrum/Planned End",
+        "Scrum/Planned Start"
+      ]
+    },
+    "Scrum/Sub-bug": {
+      "fields_count": 22,
+      "description_field": "Scrum/Description",
+      "state_field": "workflow/state"
+    },
+    "Scrum/Feature": {
+      "fields_count": 91,
+      "name_field": "Scrum/name",
+      "description_field": "Scrum/description",
+      "state_field": "workflow/state",
+      "date_fields": [
+        "Scrum/Actual Kick-off date",
+        "Scrum/Actual Release Date",
+        "Scrum/Dev Actual Start Date",
+        "Scrum/Dev Actual End Date",
+        "Scrum/Dev Planned Start Date",
+        "Scrum/Dev Planned End Date"
+      ]
+    }
+  },
+  "query_patterns": {
+    "basic_query": {
+      "command": "fibery.entity/query",
+      "args": {
+        "query": {
+          "q/from": "Scrum/Task",
+          "q/select": [
+            "fibery/id",
+            "fibery/public-id",
+            "Scrum/Name",
+            {
+              "workflow/state": [
+                "enum/name"
+              ]
+            }
+          ],
+          "q/limit": 10
+        }
+      }
+    },
+    "notes": [
+      "Field names are case-sensitive (Scrum/Name vs Scrum/name)",
+      "workflow/state requires nested selection: {'workflow/state': ['enum/name']}",
+      "Description fields may return markdown with 'content' and 'secret' keys",
+      "Collections (comments, assignees) require special vector format",
+      "Use fibery/public-id for matching with Toggl entity IDs"
+    ]
+  }
+}

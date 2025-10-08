@@ -1,0 +1,223 @@
+{
+  "total_databases": 20,
+  "total_entity_types": 177,
+  "databases": {
+    "Design": [
+      "Design/Business Value_Design/Design Feature",
+      "Design/Design Epic",
+      "Design/Design Feature",
+      "Design/Experimental - Review status_Design/Old Work Version",
+      "Design/Old Work Version",
+      "Design/Priority_Design/Design Feature",
+      "Design/Probability of Planned end_Design/Design Feature",
+      "Design/Quarter_Design/Design Feature",
+      "Design/Review Logs",
+      "Design/Review Outcome_Design/Work Version",
+      "Design/Screen set",
+      "Design/State_Design/Work Version",
+      "Design/Work Version"
+    ],
+    "GitHub": [
+      "GitHub/Branch",
+      "GitHub/Member",
+      "GitHub/Pull Request",
+      "GitHub/Release",
+      "GitHub/Repository"
+    ],
+    "LLM Eval": [
+      "LLM Eval/Assistant Answer"
+    ],
+    "Notes": [
+      "Notes/Note",
+      "Notes/Type_Notes/Note"
+    ],
+    "Product Management": [
+      "Product Management/Business value",
+      "Product Management/CF - Type_Product Management/Request",
+      "Product Management/Feedback",
+      "Product Management/Priority_Requests/Feedback",
+      "Product Management/Priority_Requests/Request",
+      "Product Management/Release date probability_Requests/Request",
+      "Product Management/Request",
+      "Product Management/Request report",
+      "Product Management/Requested by_Requests/Request",
+      "Product Management/Source_Requests/Request",
+      "Product Management/Team_Requests/Request",
+      "Product Management/Theme_Requests/Feedback",
+      "Product Management/Type_Requests/Request"
+    ],
+    "Project management": [
+      "Project management/App",
+      "Project management/Entity type",
+      "Project management/Project",
+      "Project management/Space",
+      "Project management/Stack_Project management/App",
+      "Project management/Week",
+      "Project management/Weekday"
+    ],
+    "QA": [
+      "QA/Enviroment_QA/Test report",
+      "QA/Test report",
+      "QA/Test state"
+    ],
+    "Retrospective": [
+      "Retrospective/Action",
+      "Retrospective/Bug topic",
+      "Retrospective/Idea",
+      "Retrospective/Personal Todo",
+      "Retrospective/Report",
+      "Retrospective/Type_Alex Playground - Retrospective/Report",
+      "Retrospective/Work item"
+    ],
+    "Scrum": [
+      "Scrum/AI Involvement_Scrum/Task",
+      "Scrum/Analysis state_Scrum/Feature",
+      "Scrum/Appetite_Scrum/Feature",
+      "Scrum/Bug",
+      "Scrum/Build",
+      "Scrum/Business value_Scrum/Feature",
+      "Scrum/Business value_Scrum/Task",
+      "Scrum/Chore",
+      "Scrum/Commitment",
+      "Scrum/Design state_Scrum/Feature",
+      "Scrum/Dev state_Scrum/Feature",
+      "Scrum/End quarter LLM_Scrum/Commitment",
+      "Scrum/Environment",
+      "Scrum/Epic",
+      "Scrum/Experimental - Phase_Scrum/Commitment",
+      "Scrum/Experimental - Phase_Scrum/Feature",
+      "Scrum/Feature",
+      "Scrum/Goal_Scrum/Task",
+      "Scrum/Hotfix",
+      "Scrum/Important_Scrum/Chore",
+      "Scrum/On duty",
+      "Scrum/Priorities (Temporary field)_Scrum/Feature",
+      "Scrum/Priority_Scrum/Bug",
+      "Scrum/Priority_Scrum/Chore",
+      "Scrum/Priority_Scrum/Feature",
+      "Scrum/Priority_Scrum/Task",
+      "Scrum/QA release effort",
+      "Scrum/QA state_Scrum/Feature",
+      "Scrum/Qase step id_Scrum/Bug",
+      "Scrum/Quarter_Scrum/Feature",
+      "Scrum/Release",
+      "Scrum/Release date probability_Scrum/Feature",
+      "Scrum/Services_Scrum/Release",
+      "Scrum/Severity_Scrum/Bug",
+      "Scrum/Severity_Scrum/Sub-bug",
+      "Scrum/Size_Scrum/Chore",
+      "Scrum/Sprint",
+      "Scrum/Start quarter LLM_Scrum/Commitment",
+      "Scrum/State LLM_Scrum/Commitment",
+      "Scrum/State_Scrum/Template",
+      "Scrum/Sub-bug",
+      "Scrum/Sub-task",
+      "Scrum/Sub-task Template",
+      "Scrum/TC state_Scrum/Task",
+      "Scrum/Target end quarter_Scrum/Commitments",
+      "Scrum/Target start quarter_Scrum/Commitment",
+      "Scrum/Task",
+      "Scrum/Template",
+      "Scrum/Test coverage",
+      "Scrum/Theme",
+      "Scrum/Track_Scrum/Feature",
+      "Scrum/Urgent_Scrum/Chore"
+    ],
+    "TargetProcess mapping": [
+      "TargetProcess mapping/Attachment",
+      "TargetProcess mapping/Comment",
+      "TargetProcess mapping/General Entity",
+      "TargetProcess mapping/RelatedTo",
+      "TargetProcess mapping/RequestBusinessValue",
+      "TargetProcess mapping/RequestState",
+      "TargetProcess mapping/State",
+      "TargetProcess mapping/TP App",
+      "TargetProcess mapping/TP Bug",
+      "TargetProcess mapping/TP Epic",
+      "TargetProcess mapping/TP Feature",
+      "TargetProcess mapping/TP Project",
+      "TargetProcess mapping/TP Request",
+      "TargetProcess mapping/TP Task",
+      "TargetProcess mapping/TP User",
+      "TargetProcess mapping/TP User Story",
+      "TargetProcess mapping/Transaction",
+      "TargetProcess mapping/UserStoryState"
+    ],
+    "Test Cases": [
+      "Test Cases/Priority_Test Cases/Test case",
+      "Test Cases/Status",
+      "Test Cases/Step",
+      "Test Cases/Sub-step",
+      "Test Cases/Test case",
+      "Test Cases/Test case Priority",
+      "Test Cases/Test case Status",
+      "Test Cases/Test feature",
+      "Test Cases/Test run",
+      "Test Cases/Test run case",
+      "Test Cases/Test run step",
+      "Test Cases/Test run sub-step"
+    ],
+    "Time tracker": [
+      "Time tracker/Time"
+    ],
+    "To-dos": [
+      "To-dos/To-do"
+    ],
+    "User Database": [
+      "User Database/Departments",
+      "User Database/Project",
+      "User Database/Role",
+      "User Database/Team"
+    ],
+    "User metrics": [
+      "User metrics/Effort KPI"
+    ],
+    "comments": [
+      "comments/comment"
+    ],
+    "highlights": [
+      "highlights/Highlight",
+      "highlights/State_highlights/Highlight"
+    ],
+    "user": [
+      "user/Alternative sub-team_fibery/user",
+      "user/Specialty_fibery/user"
+    ],
+    "vacations": [
+      "vacations/Accounting",
+      "vacations/Conflict",
+      "vacations/Holidays",
+      "vacations/Over work hours",
+      "vacations/Year_vacations/Holidays",
+      "vacations/dayoff",
+      "vacations/sick",
+      "vacations/vacation"
+    ],
+    "workflow": [
+      "workflow/state_Design/Design Feature",
+      "workflow/state_Design/Old Work Version",
+      "workflow/state_LLM Eval/Assistant Answer",
+      "workflow/state_Product Management/Feedback",
+      "workflow/state_Product Management/Request",
+      "workflow/state_Project management/App",
+      "workflow/state_QA/Test report",
+      "workflow/state_Retrospective/Action",
+      "workflow/state_Scrum/Bug",
+      "workflow/state_Scrum/Build",
+      "workflow/state_Scrum/Chore",
+      "workflow/state_Scrum/Commitment",
+      "workflow/state_Scrum/Epic",
+      "workflow/state_Scrum/Feature",
+      "workflow/state_Scrum/Hotfix",
+      "workflow/state_Scrum/Release",
+      "workflow/state_Scrum/Sub-bug",
+      "workflow/state_Scrum/Sub-task",
+      "workflow/state_Scrum/Task",
+      "workflow/state_Scrum/Test coverage",
+      "workflow/state_Test Cases/Test case",
+      "workflow/state_Test Cases/Test feature",
+      "workflow/state_To-dos/To-do",
+      "workflow/state_vacations/Conflict"
+    ]
+  }
+}

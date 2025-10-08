@@ -1,0 +1,346 @@
+{
+  "Scrum/Task": {
+    "date_fields": [
+      {
+        "name": "fibery/creation-date",
+        "type": "fibery/date-time"
+      },
+      {
+        "name": "fibery/modification-date",
+        "type": "fibery/date-time"
+      },
+      {
+        "name": "Scrum/Completion Date",
+        "type": "fibery/date-time"
+      },
+      {
+        "name": "Scrum/Deploy instruction updated",
+        "type": "fibery/date-time"
+      },
+      {
+        "name": "Scrum/FeatureorRequest Planned End",
+        "type": "fibery/date"
+      },
+      {
+        "name": "Scrum/Planned End",
+        "type": "fibery/date"
+      },
+      {
+        "name": "Scrum/Planned Start",
+        "type": "fibery/date"
+      },
+      {
+        "name": "Scrum/Planned date conflict",
+        "type": "fibery/bool"
+      },
+      {
+        "name": "Scrum/QA build Planned End",
+        "type": "fibery/date"
+      },
+      {
+        "name": "Scrum/Review Planned End",
+        "type": "fibery/date"
+      },
+      {
+        "name": "Scrum/Start Timer in Toggl",
+        "type": "fibery/text"
+      },
+      {
+        "name": "Scrum/Started Date",
+        "type": "fibery/date-time"
+      }
+    ],
+    "assignee_fields": [],
+    "description_fields": [
+      {
+        "name": "Scrum/Description",
+        "type": "Collaboration~Documents/Document"
+      }
+    ],
+    "state_fields": [
+      {
+        "name": "Scrum/Notion State",
+        "type": "fibery/text"
+      },
+      {
+        "name": "Scrum/TC state",
+        "type": "Scrum/TC state_Scrum/Task"
+      },
+      {
+        "name": "Scrum/Test QA state",
+        "type": "QA/Test state"
+      },
+      {
+        "name": "Scrum/Test Stage state",
+        "type": "QA/Test state"
+      },
+      {
+        "name": "Scrum/Test coverage state",
+        "type": "workflow/state_Scrum/Test coverage"
+      },
+      {
+        "name": "workflow/state",
+        "type": "workflow/state_Scrum/Task"
+      }
+    ],
+    "comment_fields": [
+      {
+        "name": "comments/comments",
+        "type": "comments/comment"
+      }
+    ],
+    "relation_fields": []
+  },
+  "Scrum/Bug": {
+    "date_fields": [
+      {
+        "name": "fibery/creation-date",
+        "type": "fibery/date-time"
+      },
+      {
+        "name": "fibery/modification-date",
+        "type": "fibery/date-time"
+      },
+      {
+        "name": "Scrum/Completion Date",
+        "type": "fibery/date-time"
+      },
+      {
+        "name": "Scrum/Deploy instruction updated",
+        "type": "fibery/date-time"
+      },
+      {
+        "name": "Scrum/FeatureorRequest Planned End",
+        "type": "fibery/date"
+      },
+      {
+        "name": "Scrum/Planned End",
+        "type": "fibery/date"
+      },
+      {
+        "name": "Scrum/Planned Start",
+        "type": "fibery/date"
+      },
+      {
+        "name": "Scrum/QA build planned end",
+        "type": "fibery/date"
+      },
+      {
+        "name": "Scrum/Review Planned End",
+        "type": "fibery/date"
+      },
+      {
+        "name": "Scrum/Start Timer in Toggl",
+        "type": "fibery/text"
+      },
+      {
+        "name": "Scrum/Started Date",
+        "type": "fibery/date-time"
+      }
+    ],
+    "assignee_fields": [],
+    "description_fields": [
+      {
+        "name": "Scrum/Debugging result description",
+        "type": "Collaboration~Documents/Document"
+      },
+      {
+        "name": "Scrum/description",
+        "type": "Collaboration~Documents/Document"
+      }
+    ],
+    "state_fields": [
+      {
+        "name": "Scrum/Test Prod state",
+        "type": "QA/Test state"
+      },
+      {
+        "name": "Scrum/Test QA state",
+        "type": "QA/Test state"
+      },
+      {
+        "name": "Scrum/Test Stage state",
+        "type": "QA/Test state"
+      },
+      {
+        "name": "Scrum/Test coverage state",
+        "type": "workflow/state_Scrum/Test coverage"
+      },
+      {
+        "name": "workflow/state",
+        "type": "workflow/state_Scrum/Bug"
+      }
+    ],
+    "comment_fields": [
+      {
+        "name": "comments/comments",
+        "type": "comments/comment"
+      }
+    ],
+    "relation_fields": []
+  },
+  "Scrum/Sub-bug": {
+    "date_fields": [
+      {
+        "name": "fibery/creation-date",
+        "type": "fibery/date-time"
+      },
+      {
+        "name": "fibery/modification-date",
+        "type": "fibery/date-time"
+      },
+      {
+        "name": "Scrum/Start Timer in Toggl",
+        "type": "fibery/text"
+      }
+    ],
+    "assignee_fields": [],
+    "description_fields": [
+      {
+        "name": "Scrum/Description",
+        "type": "Collaboration~Documents/Document"
+      }
+    ],
+    "state_fields": [
+      {
+        "name": "workflow/state",
+        "type": "workflow/state_Scrum/Sub-bug"
+      }
+    ],
+    "comment_fields": [
+      {
+        "name": "comments/comments",
+        "type": "comments/comment"
+      }
+    ],
+    "relation_fields": []
+  },
+  "Scrum/Feature": {
+    "date_fields": [
+      {
+        "name": "fibery/creation-date",
+        "type": "fibery/date-time"
+      },
+      {
+        "name": "fibery/modification-date",
+        "type": "fibery/date-time"
+      },
+      {
+        "name": "Scrum/Action point update at",
+        "type": "fibery/date-time"
+      },
+      {
+        "name": "Scrum/Actual Kick-off date",
+        "type": "fibery/date"
+      },
+      {
+        "name": "Scrum/Actual Ready for dev date",
+        "type": "fibery/date"
+      },
+      {
+        "name": "Scrum/Actual Release Date",
+        "type": "fibery/date-time"
+      },
+      {
+        "name": "Scrum/Appetite updated at",
+        "type": "fibery/date"
+      },
+      {
+        "name": "Scrum/Current weekly update",
+        "type": "fibery/bool"
+      },
+      {
+        "name": "Scrum/Dev Actual End Date",
+        "type": "fibery/date"
+      },
+      {
+        "name": "Scrum/Dev Actual Start Date",
+        "type": "fibery/date-time"
+      },
+      {
+        "name": "Scrum/Dev Planned End Date",
+        "type": "fibery/date"
+      },
+      {
+        "name": "Scrum/Dev Planned Start Date",
+        "type": "fibery/date"
+      },
+      {
+        "name": "Scrum/From Creation to Completion (Days)",
+        "type": "fibery/int"
+      },
+      {
+        "name": "Scrum/Latest BA planned end",
+        "type": "fibery/date"
+      },
+      {
+        "name": "Scrum/Max Actual Release Date of linked Releases",
+        "type": "fibery/date"
+      },
+      {
+        "name": "Scrum/Max Planned Release Date of linked Releases",
+        "type": "fibery/date"
+      },
+      {
+        "name": "Scrum/Planned Release Date",
+        "type": "fibery/date"
+      },
+      {
+        "name": "Scrum/Release Planned Release Date",
+        "type": "fibery/date"
+      },
+      {
+        "name": "Scrum/Release date probability",
+        "type": "Scrum/Release date probability_Scrum/Feature"
+      },
+      {
+        "name": "Scrum/Start Timer in Toggl",
+        "type": "fibery/text"
+      },
+      {
+        "name": "Scrum/Status update",
+        "type": "fibery/text"
+      }
+    ],
+    "assignee_fields": [],
+    "description_fields": [
+      {
+        "name": "Scrum/description",
+        "type": "Collaboration~Documents/Document"
+      }
+    ],
+    "state_fields": [
+      {
+        "name": "Scrum/Analysis state",
+        "type": "Scrum/Analysis state_Scrum/Feature"
+      },
+      {
+        "name": "Scrum/Design state",
+        "type": "Scrum/Design state_Scrum/Feature"
+      },
+      {
+        "name": "Scrum/Dev state",
+        "type": "Scrum/Dev state_Scrum/Feature"
+      },
+      {
+        "name": "Scrum/Notion State",
+        "type": "fibery/text"
+      },
+      {
+        "name": "Scrum/QA state",
+        "type": "Scrum/QA state_Scrum/Feature"
+      },
+      {
+        "name": "workflow/state",
+        "type": "workflow/state_Scrum/Feature"
+      }
+    ],
+    "comment_fields": [
+      {
+        "name": "comments/comments",
+        "type": "comments/comment"
+      }
+    ],
+    "relation_fields": []
+  }
+}
