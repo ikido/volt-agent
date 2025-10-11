@@ -1,0 +1,39 @@
+enrichment_activities:
+  # Scrum entities
+  "Scrum/Task":
+    activity: enrich_scrum_task
+    max_concurrent: 5
+    fields:
+      - Story Points
+      - Sprint
+      - Epic
+      - Acceptance Criteria
+
+  "Scrum/Bug":
+    activity: enrich_scrum_bug
+    max_concurrent: 5
+    fields:
+      - Severity
+      - Steps to Reproduce
+      - Root Cause
+
+  # Product entities
+  "Product/Feature":
+    activity: enrich_product_feature
+    max_concurrent: 3
+    fields:
+      - Product Area
+      - Customer Requests
+      - Revenue Impact
+      - Launch Date
+
+  # Default for all other types
+  default:
+    activity: default_enrich_entity
+    max_concurrent: 5
+    fields:
+      - State
+      - Dates
+      - Description
+      - Comments
+      - Assignees
