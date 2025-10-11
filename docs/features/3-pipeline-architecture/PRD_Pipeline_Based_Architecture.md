@@ -1,582 +1,766 @@
 # Product Requirements Document (PRD)
 # Pipeline-Based Architecture for Toggl and Fibery Analysis
 
-**Version:** 2.0  
-**Date:** October 10, 2025  
-**Status:** 📋 Planning  
+**Version:** 2.0
+**Date:** October 10, 2025
+**Status:** 📋 Planning
 **Previous Version:** 1.0 (SQLite-based monolithic architecture)
 
 ---
 
 ## Executive Summary
 
-This document outlines the requirements for refactoring the Toggl-Fibery analysis system from a monolithic SQLite-based architecture to a **pipeline-based architecture** using JSON files for caching. The new system will support both **sequential step-by-step execution** and **full pipeline execution** with a single command.
+This document outlines the requirements for refactoring the Toggl-Fibery analysis system from a monolithic SQLite-based architecture to a **Temporal workflow-based pipeline architecture** using JSON files for caching. The new system uses Temporal for workflow orchestration, providing robust error handling, retry logic, and progress tracking.
 
 ### Key Changes from v1.0
 
 1. **Replace SQLite with JSON files** for all caching and data persistence
-2. **Multi-step pipeline** with independently executable steps
-3. **Run-based caching** with structured JSON outputs at each step
-4. **Step isolation** allowing re-execution of individual steps without re-running previous steps
-5. **Future-ready architecture** for console UI and additional pipeline steps
+2. **Temporal-orchestrated workflow** with activities for each processing step
+3. **Run-based caching** with structured JSON outputs at each activity
+4. **Configurable stage execution** - start from Toggl or Fibery enrichment stage
+5. **Rolling window parallelism** for bounded concurrent entity processing
+6. **Per-entity-type enrichment** with configurable activity mapping
+7. **LLM-generated reports** for all reporting activities
+8. **Docker Compose integration** for local Temporal server deployment
 
 ---
 
 ## Table of Contents
 
 1. [Architecture Overview](#1-architecture-overview)
-2. [Pipeline Steps](#2-pipeline-steps)
-3. [Data Structures](#3-data-structures)
-4. [Command-Line Interface](#4-command-line-interface)
-5. [File Structure](#5-file-structure)
-6. [Functional Requirements](#6-functional-requirements)
-7. [Non-Functional Requirements](#7-non-functional-requirements)
-8. [Migration Strategy](#8-migration-strategy)
-9. [Future Enhancements](#9-future-enhancements)
+2. [Temporal Workflow Design](#2-temporal-workflow-design)
+3. [Workflow Activities](#3-workflow-activities)
+4. [Parallelism Pattern](#4-parallelism-pattern)
+5. [Data Structures](#5-data-structures)
+6. [Command-Line Interface](#6-command-line-interface)
+7. [File Structure](#7-file-structure)
+8. [Infrastructure](#8-infrastructure)
 
 ---
 
 ## 1. Architecture Overview
 
-### 1.1 Pipeline Philosophy
+### 1.1 Temporal Workflow Pattern
 
-The new architecture follows a **data pipeline pattern** where:
+The new architecture uses **Temporal** for workflow orchestration:
 
-1. Each step has **clear inputs and outputs**
-2. Each step produces **both JSON (machine-readable) and Markdown (human-readable)** outputs
-3. Steps are **idempotent** - can be re-run with same inputs to get same outputs
-4. Steps can be executed **independently** or **sequentially** via a single command
-5. All intermediate data is **cached as JSON** for inspection, debugging, and re-processing
+1. **Single Workflow** orchestrates the entire pipeline execution
+2. **Activities** represent atomic units of work (data fetching, processing, reporting)
+3. **Local Activities** for fast, deterministic operations (file I/O, data transformation)
+4. **Regular Activities** for external API calls with retry logic
+5. **Cleanup Activities** at the start of each stage to ensure idempotency
+6. **Rolling Window Parallelism** for bounded concurrent processing
+7. **Temporal Queries** provide real-time progress updates and ETA calculation
+8. **JSON-based persistence** for all intermediate data and outputs
 
 ### 1.2 High-Level Flow
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                         Pipeline Flow                            │
+│              Temporal Workflow: TogglFiberyPipeline              │
 └─────────────────────────────────────────────────────────────────┘
 
-Step 1: TOGGL COLLECTION
-  Input:  --start-date, --end-date, [--users]
-  Output: run_metadata.json, toggl_data.json, toggl_report.md
-  
-          ↓ (pass run_id)
-          
-Step 2: FIBERY ENRICHMENT
-  Input:  --run-id
-  Reads:  toggl_data.json (from step 1)
-  Output: fibery_enriched.json, fibery_report.md
-  
-          ↓ (pass run_id for future steps)
-          
-Step N: FUTURE STEPS
-  Input:  --run-id
-  Reads:  Previous step outputs
-  Output: New JSON + Markdown outputs
+Input Parameters:
+  - start_date, end_date, users
+  - start_from: "toggl" | "fibery" (default: "toggl")
+  - run_id: optional (required if start_from="fibery")
 
-┌─────────────────────────────────────────────────────────────────┐
-│                      OR: Full Pipeline                           │
-└─────────────────────────────────────────────────────────────────┘
+Workflow Execution:
 
-Full Command: Executes all steps sequentially
-  Input:  --start-date, --end-date, [--users]
-  Runs:   Step 1 → Step 2 → Step N
-  Output: All JSON + Markdown files for each step
+[STAGE 1: TOGGL COLLECTION] (if start_from == "toggl")
+  ├─ Activity 0: cleanup_toggl_stage() [LOCAL]
+  │   → Removes previous Toggl stage outputs for this run
+  │
+  ├─ Activity 1: fetch_toggl_data()
+  │   → Fetches raw Toggl time entries for date range
+  │   → Saves to: tmp/runs/{run_id}/raw_toggl_data.json
+  │
+  ├─ Activity 2: aggregate_toggl_data() [LOCAL]
+  │   → Parses entity metadata, groups by user/entity
+  │   → Saves to: tmp/runs/{run_id}/toggl_aggregated.json
+  │
+  └─ Activity 3: generate_toggl_report() [LOCAL, LLM]
+      → Uses LLM to generate markdown summary report
+      → Saves to: tmp/runs/{run_id}/reports/toggl_summary.md
+
+[STAGE 2: FIBERY ENRICHMENT] (if start_from == "fibery" OR after Stage 1)
+  ├─ Activity 4: cleanup_fibery_stage() [LOCAL]
+  │   → Removes previous Fibery stage outputs for this run
+  │
+  ├─ Activity 5: extract_fibery_entities() [LOCAL]
+  │   → Reads toggl_aggregated.json
+  │   → Returns: List[EntityToEnrich] grouped by (db, type)
+  │
+  ├─ Activity 6: enrich_entities_by_type() [ROLLING WINDOW]
+  │   → For each (db, type) pair:
+  │   →   - Select enrichment activity from config
+  │   →   - Process entities using rolling window (max_concurrent=5)
+  │   → Returns: List[EnrichedEntity]
+  │
+  ├─ Activity 7: generate_person_reports() [ROLLING WINDOW, LLM]
+  │   → For each user:
+  │   →   - Aggregate enriched data
+  │   →   - Generate LLM summary
+  │   → Returns: List[PersonReport]
+  │
+  ├─ Activity 8: save_enriched_data() [LOCAL]
+  │   → Saves enriched entities and person reports
+  │   → Saves to: tmp/runs/{run_id}/enriched_data.json
+  │   → Saves to: tmp/runs/{run_id}/reports/individual/*.md
+  │
+  └─ Activity 9: generate_team_report() [LOCAL, LLM]
+      → Uses LLM to create aggregated team report
+      → Saves to: tmp/runs/{run_id}/reports/team_summary.md
+
+Temporal Query: get_progress()
+  → Returns: {current_stage, current_activity, percentage, eta_seconds}
 ```
 
 ### 1.3 Benefits
 
-✅ **Modularity**: Each step is independent and testable  
-✅ **Debuggability**: Inspect JSON outputs at each step  
-✅ **Flexibility**: Re-run only the steps you need  
-✅ **Extensibility**: Easy to add new pipeline steps  
-✅ **Transparency**: Human-readable reports at each step  
-✅ **No Database**: Simpler deployment, easier backup, version control friendly  
+✅ **Reliability**: Temporal handles failures, retries, and timeouts automatically
+✅ **Observability**: Built-in workflow history and progress tracking
+✅ **Debuggability**: Inspect Temporal UI for execution history and failures
+✅ **Flexibility**: Start from any stage, re-run enrichment without re-fetching Toggl
+✅ **Scalability**: Bounded parallelism via rolling window pattern
+✅ **Extensibility**: Per-entity-type enrichment activities via configuration
+✅ **Idempotency**: Cleanup activities ensure stages can be re-run
+✅ **Durability**: Workflow state persisted automatically
 
 ---
 
-## 2. Pipeline Steps
+## 2. Temporal Workflow Design
 
-### Step 1: Toggl Data Collection
+### 2.1 Workflow: TogglFiberyPipeline
 
-**Command:** `volt-agent toggl-collect`
+**Workflow ID Format:** `toggl-fibery-{run_id}`
+**Task Queue:** `volt-agent-pipeline`
+**Execution Timeout:** 2 hours
+**Run Timeout:** 2 hours
 
-**Purpose:** Fetch raw Toggl time tracking data, parse entity metadata, aggregate by person and activity.
+**Input Parameters:**
+```python
+@dataclass
+class PipelineInput:
+    # Date range for Toggl data
+    start_date: str  # YYYY-MM-DD
+    end_date: str    # YYYY-MM-DD
+
+    # User filtering
+    users: Optional[List[str]] = None  # User emails, None = all users
+
+    # Stage control
+    start_from: Literal["toggl", "fibery"] = "toggl"
+    run_id: Optional[str] = None  # Required if start_from="fibery"
+
+    # Processing configuration
+    config: Optional[Dict[str, Any]] = None  # Override config values
+```
+
+**Workflow Logic:**
+1. If `start_from == "toggl"`:
+   - Generate `run_id` if not provided (format: `run_YYYY-MM-DD-HH-MM-SS`)
+   - Execute Toggl cleanup activity
+   - Execute Toggl collection activities (1-3)
+2. If `start_from == "fibery"`:
+   - Validate `run_id` is provided and Toggl data exists
+   - Execute Fibery cleanup activity
+3. Execute Fibery enrichment activities (5-9) using rolling window for parallelism
+4. Update run metadata on success/failure
+5. Return final run summary
+
+**Error Handling:**
+- If any activity fails, entire workflow fails (no partial success)
+- Workflow state is preserved in Temporal for debugging
+- Run metadata is marked as "failed" with error details
+- Cleanup activities ensure failed runs can be retried cleanly
+
+**Progress Tracking:**
+- Workflow implements `get_progress()` query handler
+- Returns current stage, activity, completion percentage, and ETA
+- Tracks sub-progress for rolling window activities
+- Used by CLI for real-time progress display
+
+### 2.2 Retry and Timeout Policies
+
+**Default Activity Retry Policy:**
+```python
+RetryPolicy(
+    initial_interval=timedelta(seconds=1),
+    maximum_attempts=1,  # No retries - fail fast
+    non_retryable_error_types=["ValueError", "ValidationError"]
+)
+```
+
+**Activity Timeouts:**
+- `fetch_toggl_data`: 30 minutes (handles large datasets, rate limiting)
+- `enrich_*_entity`: 2 minutes per entity
+- `generate_*_report`: 5 minutes per report (LLM calls)
+- Cleanup activities: 5 minutes
+- Local activities: 10 minutes (file I/O operations)
+
+**Rationale:**
+- Single retry attempt prevents infinite loops and wasted resources
+- High timeouts accommodate API rate limiting and large datasets
+- Failures are explicit and require manual intervention
+
+---
+
+## 3. Workflow Activities
+
+### Activity 0: cleanup_toggl_stage
+**Type:** Local Activity
+**Purpose:** Clean up previous Toggl stage outputs to ensure idempotency
 
 **Inputs:**
-- `--start-date` (YYYY-MM-DD): Start of reporting period
-- `--end-date` (YYYY-MM-DD): End of reporting period
-- `--users` (optional): Comma-separated list of user emails (default: all workspace users)
+- `run_id`
 
 **Processing:**
-1. Generate unique `run_id` (format: `run_YYYY-MM-DD-HH-MM-SS`)
-2. Create run directory: `tmp/runs/{run_id}/`
-3. Fetch Toggl time entries for the date range (using existing day-by-day chunking)
-4. Parse Fibery entity metadata from descriptions (existing regex parser)
-5. Group entries by:
-   - User email
-   - Matched vs unmatched entities
-   - For matched: by Fibery entity ID
-   - For unmatched: by description/activity type
-6. Aggregate time spent per group
+- Remove `raw_toggl_data.json` if exists
+- Remove `toggl_aggregated.json` if exists
+- Remove `reports/toggl_summary.md` if exists
+- Preserve enriched data and fibery reports
 
-**Outputs:**
-- `tmp/runs/{run_id}/run_metadata.json` - Metadata about this run (root level)
-- `tmp/runs/{run_id}/step_1_toggl_collection/toggl_data.json` - Complete structured Toggl data
-- `tmp/runs/{run_id}/step_1_toggl_collection/reports/toggl_summary.md` - Human-readable summary report
-- `tmp/runs/{run_id}/step_1_toggl_collection/logs/toggl_collection.log` - Detailed execution log
-
-**Success Criteria:**
-- All Toggl data fetched and parsed successfully
-- JSON output is valid and complete
-- Markdown report is generated
-- No data loss compared to v1.0 SQLite approach
+**Timeout:** 5 minutes
+**Retry:** 1 attempt
 
 ---
 
-### Step 2: Fibery Enrichment
-
-**Command:** `volt-agent fibery-enrich`
-
-**Purpose:** Enrich matched Fibery entities with additional metadata from Fibery API.
+### Activity 1: fetch_toggl_data
+**Type:** Regular Activity
+**Purpose:** Fetch raw Toggl time entries from API
 
 **Inputs:**
-- `--run-id` (required): Run ID from Step 1
+- `start_date`, `end_date`, `user_emails`, `run_id`
 
 **Processing:**
-1. Read `toggl_data.json` from the specified run
-2. Extract all matched Fibery entities (those with entity IDs)
-3. For each entity, fetch from Fibery API:
-   - Start date, end date
-   - Total time logged (if available in Fibery)
-   - Description presence and content
-   - Comments count and recent comments
-   - Feature/project metadata
-   - State/status information
-   - Priority, assignees, etc.
-4. Merge Fibery data with Toggl time tracking data
-5. Use LLM to generate summaries for enriched entities
+- Uses existing day-by-day chunking logic
+- Respects Toggl API rate limits (240 req/hour)
+- Fetches all time entries for specified period
 
-**Outputs:**
-- `tmp/runs/{run_id}/step_2_fibery_enrichment/fibery_enriched.json` - Toggl data enriched with Fibery metadata
-- `tmp/runs/{run_id}/step_2_fibery_enrichment/reports/fibery_summary.md` - Human-readable enriched report
-- `tmp/runs/{run_id}/step_2_fibery_enrichment/logs/fibery_enrichment.log` - Detailed execution log
+**Output File:** `tmp/runs/{run_id}/raw_toggl_data.json`
 
-**Success Criteria:**
-- All matched entities successfully enriched (or gracefully handled if entity not found)
-- JSON output maintains all Toggl data + adds Fibery metadata
-- Markdown report shows enriched information
-- No degradation in report quality compared to v1.0
+**Timeout:** 30 minutes
+**Retry:** 1 attempt
 
 ---
 
-### Step 3: Full Pipeline Execution
-
-**Command:** `volt-agent run-full`
-
-**Purpose:** Execute all pipeline steps sequentially in a single command.
+### Activity 2: aggregate_toggl_data
+**Type:** Local Activity
+**Purpose:** Parse and aggregate Toggl data by user and entity
 
 **Inputs:**
-- Same as Step 1: `--start-date`, `--end-date`, `--users`
+- `run_id` (reads `raw_toggl_data.json`)
 
 **Processing:**
-1. Execute Step 1 (Toggl Collection) → get `run_id`
-2. Execute Step 2 (Fibery Enrichment) with `run_id`
-3. Execute any future steps with `run_id`
+- Parse Fibery entity metadata using regex
+- Group entries by user → matched/unmatched → entity/activity
+- Calculate time aggregations
+- Generate statistics
 
-**Outputs:**
-- All outputs from all steps in the run directory
+**Output File:** `tmp/runs/{run_id}/toggl_aggregated.json`
 
-**Success Criteria:**
-- All steps execute successfully
-- Same results as running steps individually
-- Graceful error handling with rollback/cleanup on failure
+**Timeout:** 10 minutes
+**Retry:** 1 attempt
 
 ---
 
-## 3. Data Structures
+### Activity 3: generate_toggl_report
+**Type:** Local Activity
+**Purpose:** Use LLM to generate markdown summary report for Toggl data
 
-### 3.1 Run Metadata (`run_metadata.json`)
+**Inputs:**
+- `run_id` (reads `toggl_aggregated.json`)
 
-**Purpose:** Store metadata about the pipeline run for reference and provenance.
+**Processing:**
+- Read aggregated Toggl data
+- Call LLM with prompt to generate:
+  - Executive summary
+  - Per-user summaries
+  - Matched entities overview
+  - Unmatched activities summary
+  - Time distribution analysis
+- Format LLM output as markdown
+
+**Output File:** `tmp/runs/{run_id}/reports/toggl_summary.md`
+
+**Timeout:** 10 minutes (includes LLM call)
+**Retry:** 1 attempt
+
+---
+
+### Activity 4: cleanup_fibery_stage
+**Type:** Local Activity
+**Purpose:** Clean up previous Fibery stage outputs to ensure idempotency
+
+**Inputs:**
+- `run_id`
+
+**Processing:**
+- Remove `enriched_data.json` if exists
+- Remove `reports/individual/*.md` files if exist
+- Remove `reports/team_summary.md` if exists
+- Preserve Toggl data
+
+**Timeout:** 5 minutes
+**Retry:** 1 attempt
+
+---
+
+### Activity 5: extract_fibery_entities
+**Type:** Local Activity
+**Purpose:** Build list of Fibery entities to enrich, grouped by type
+
+**Inputs:**
+- `run_id` (reads `toggl_aggregated.json`)
+
+**Processing:**
+- Extract all unique matched entities
+- Group by (database, entity_type)
+- Return dict: `{(db, type): [entity_ids]}`
+
+**Output:** Returns `Dict[Tuple[str, str], List[str]]` (in-memory)
+
+**Timeout:** 5 minutes
+**Retry:** 1 attempt
+
+---
+
+### Activity 6: enrich_entities_by_type
+**Type:** Orchestrator Activity (calls entity-specific activities)
+**Purpose:** Enrich entities using type-specific activities with rolling window parallelism
+
+**Inputs:**
+- `entities_by_type: Dict[Tuple[str, str], List[str]]`
+- `run_id`
+- `config: EnrichmentConfig`
+
+**Processing:**
+1. For each (database, entity_type) pair:
+   - Look up enrichment activity from config
+   - If no specific activity found, use `default_enrich_entity`
+   - Use rolling window pattern (max_concurrent=5) to process entities
+   - Each entity processed by its type-specific activity
+
+**Configuration Example:**
+```yaml
+enrichment_activities:
+  "Scrum/Task":
+    activity: enrich_scrum_task
+    max_concurrent: 5
+  "Scrum/Bug":
+    activity: enrich_scrum_bug
+    max_concurrent: 5
+  "Product/Feature":
+    activity: enrich_product_feature
+    max_concurrent: 3
+  default:
+    activity: default_enrich_entity
+    max_concurrent: 5
+```
+
+**Output:** Returns `List[EnrichedEntity]`
+
+**Timeout:** 60 minutes (2 min/entity * 30 entities max per batch)
+**Retry:** 1 attempt
+
+**Type-Specific Enrichment Activities:**
+
+Each entity type can have a dedicated enrichment activity that knows how to query specific fields:
+
+```python
+async def enrich_scrum_task(entity_id: str, run_id: str) -> EnrichedEntity:
+    """Enrich Scrum Task with task-specific fields"""
+    # Query Fibery API for Scrum Task fields:
+    # - Story Points, Sprint, Epic
+    # - Acceptance Criteria
+    # - Test Cases linked
+    # - etc.
+    pass
+
+async def enrich_product_feature(entity_id: str, run_id: str) -> EnrichedEntity:
+    """Enrich Product Feature with feature-specific fields"""
+    # Query Fibery API for Product Feature fields:
+    # - Product Area, Customer Requests
+    # - Revenue Impact
+    # - Launch Date
+    # - etc.
+    pass
+
+async def default_enrich_entity(entity_id: str, entity_type: str, run_id: str) -> EnrichedEntity:
+    """Default enrichment for entities without specific activity"""
+    # Query common fields:
+    # - State, dates, description, comments
+    # - Assignees, priority, labels
+    pass
+```
+
+---
+
+### Activity 7: generate_person_reports
+**Type:** Orchestrator Activity (calls per-person LLM activity)
+**Purpose:** Generate LLM summaries for each user using rolling window
+
+**Inputs:**
+- `users: List[str]`  # User emails
+- `enriched_entities: List[EnrichedEntity]`
+- `run_id`
+
+**Processing:**
+- Use rolling window pattern (max_concurrent=3) to process users
+- For each user, call `generate_person_report_llm(user, entities)`
+- Each person report generated in parallel via LLM
+
+**Output:** Returns `List[PersonReport]`
+
+**Timeout:** 30 minutes (5 min/user * 6 users max per batch)
+**Retry:** 1 attempt
+
+**Per-Person Activity:**
+```python
+async def generate_person_report_llm(user_email: str, enriched_entities: List[EnrichedEntity]) -> PersonReport:
+    """Generate LLM summary for one person's work"""
+    # Filter entities for this user
+    # Call LLM with prompt to generate:
+    # - Overall summary
+    # - Matched entities summary
+    # - Unmatched activities summary
+    # - Work patterns and insights
+    pass
+```
+
+---
+
+### Activity 8: save_enriched_data
+**Type:** Local Activity
+**Purpose:** Save all enriched entities and person reports to files
+
+**Inputs:**
+- `run_id`
+- `enriched_entities: List[EnrichedEntity]`
+- `person_reports: List[PersonReport]`
+
+**Processing:**
+- Merge enriched entities with toggl_aggregated data
+- Save to enriched_data.json
+- Create individual markdown files per person from PersonReport
+- Update run metadata with statistics
+
+**Output Files:**
+- `tmp/runs/{run_id}/enriched_data.json`
+- `tmp/runs/{run_id}/reports/individual/{user_slug}.md`
+
+**Timeout:** 10 minutes
+**Retry:** 1 attempt
+
+---
+
+### Activity 9: generate_team_report
+**Type:** Local Activity
+**Purpose:** Use LLM to create aggregated team markdown report
+
+**Inputs:**
+- `run_id` (reads `enriched_data.json`)
+
+**Processing:**
+- Read all enriched data
+- Call LLM with prompt to generate:
+  - Team-level executive summary
+  - Key accomplishments
+  - Cross-team patterns
+  - Resource allocation insights
+  - Recommendations
+- Format LLM output as markdown
+
+**Output File:** `tmp/runs/{run_id}/reports/team_summary.md`
+
+**Timeout:** 10 minutes (includes LLM call)
+**Retry:** 1 attempt
+
+---
+
+## 4. Parallelism Pattern
+
+### 4.1 Rolling Window Parallel Processing
+
+**Overview:** A pattern for processing large lists of entities with bounded concurrency using a sliding window approach. This ensures controlled parallelism without overwhelming external services or system resources.
+
+**Problem**: Need to process a large list of entities in parallel, but want to limit concurrent operations to avoid overwhelming external APIs, rate limits, or system resources.
+
+**Solution**: Use a rolling window pattern where a fixed number of tasks run concurrently, and new tasks are started immediately as previous ones complete.
+
+### 4.2 Implementation Structure
+
+1. **Data Structures**:
+   - **Queue**: A deque (double-ended queue) holding unprocessed entities
+   - **Running Tasks**: A dictionary mapping active asyncio tasks to their entities
+   - **Results**: A list accumulating outcomes from completed tasks
+
+2. **Algorithm**:
+   1. Initialize:
+      - Load all entities into a deque
+      - Set max_concurrent limit (e.g., 5)
+      - Create empty tracking structures
+   2. Start Initial Batch:
+      - Launch up to max_concurrent tasks
+      - Add each task to running tasks dictionary
+   3. Process Until Complete:
+      - While running tasks exist:
+        a. Wait for ANY task to complete (FIRST_COMPLETED)
+        b. Collect result from completed task
+        c. Remove from running tasks
+        d. If entities remain in queue:
+           - Pop next entity
+           - Start new task
+           - Add to running tasks
+   4. Return aggregated results
+
+3. **Key Parameters**:
+   - `max_concurrent`: Maximum number of parallel operations (typically 3-10)
+   - `timeout`: Per-entity processing timeout
+   - `retry_policy`: Retry behavior for failed operations
+
+### 4.3 Code Template
+
+```python
+from collections import deque
+import asyncio
+from typing import List, Any, Callable
+
+async def process_with_rolling_window(
+    entities: List[Any],
+    process_fn: Callable,
+    max_concurrent: int = 5
+) -> List[Any]:
+    """
+    Process entities in parallel using rolling window pattern.
+
+    Args:
+        entities: List of entities to process
+        process_fn: Async function to process each entity
+        max_concurrent: Max parallel operations
+
+    Returns:
+        List of results from processing each entity
+    """
+    remaining = deque(entities)
+    running = {}  # task -> entity
+    results = []
+
+    # Start initial batch
+    while len(running) < max_concurrent and remaining:
+        entity = remaining.popleft()
+        task = asyncio.create_task(process_fn(entity))
+        running[task] = entity
+
+    # Process as they complete
+    while running:
+        done, pending = await asyncio.wait(
+            running.keys(),
+            return_when=asyncio.FIRST_COMPLETED
+        )
+
+        for completed_task in done:
+            entity = running.pop(completed_task)
+            result = completed_task.result()  # May raise exception
+            results.append(result)
+
+            # Start next if available
+            if remaining:
+                next_entity = remaining.popleft()
+                next_task = asyncio.create_task(process_fn(next_entity))
+                running[next_task] = next_entity
+
+    return results
+```
+
+### 4.4 Usage in Workflow
+
+```python
+# In Activity 6: enrich_entities_by_type
+async def enrich_entities_by_type(entities_by_type, run_id, config):
+    all_enriched = []
+
+    for (db, entity_type), entity_ids in entities_by_type.items():
+        # Get activity function for this type
+        activity_fn = get_enrichment_activity(db, entity_type, config)
+
+        # Process with rolling window
+        enriched = await process_with_rolling_window(
+            entities=entity_ids,
+            process_fn=lambda eid: activity_fn(eid, run_id),
+            max_concurrent=config.get_max_concurrent(db, entity_type)
+        )
+
+        all_enriched.extend(enriched)
+
+    return all_enriched
+```
+
+### 4.5 Advantages
+
+✅ **Bounded Concurrency**: Never exceeds the specified limit, preventing resource exhaustion
+✅ **Continuous Processing**: No idle time between batches - starts new work immediately
+✅ **Early Results**: Results available as soon as individual tasks complete
+✅ **Efficient Resource Usage**: Maintains steady load on system and external services
+✅ **Fail-Fast**: Exceptions propagate immediately, allowing quick failure detection
+
+### 4.6 When to Use
+
+✅ **Good fit when**:
+- Processing requires external API calls with rate limits
+- Individual operations have variable completion times
+- Need to balance throughput with resource constraints
+- Want continuous processing without batch delays
+
+❌ **Not ideal when**:
+- Operations are extremely fast (< 10ms)
+- No external dependencies or rate limits
+- Simple sequential processing is sufficient
+- Need strict ordering guarantees
+
+---
+
+## 5. Data Structures
+
+### 5.1 Run Metadata (`run_metadata.json`)
 
 ```json
 {
   "run_id": "run_2025-10-10-15-30-45",
+  "workflow_id": "toggl-fibery-run_2025-10-10-15-30-45",
   "created_at": "2025-10-10T15:30:45Z",
-  "status": "in_progress",  // "in_progress", "completed", "failed"
+  "status": "in_progress",
   "pipeline_version": "2.0",
-  "steps_completed": ["toggl-collect"],
-  "steps_failed": [],
   "parameters": {
     "start_date": "2025-10-07",
     "end_date": "2025-10-13",
-    "users_filter": ["user1@example.com", "user2@example.com"],
-    "users_count": 2
+    "users_filter": ["user1@example.com"],
+    "start_from": "toggl"
   },
-  "statistics": {
-    "total_time_entries": 245,
-    "total_users": 2,
-    "total_duration_seconds": 144000,
-    "matched_entries": 180,
-    "unmatched_entries": 65
+  "temporal_metadata": {
+    "workflow_id": "toggl-fibery-run_2025-10-10-15-30-45",
+    "run_id": "temporal-run-uuid",
+    "task_queue": "volt-agent-pipeline"
   },
-  "step_metadata": {
-    "toggl-collect": {
-      "started_at": "2025-10-10T15:30:45Z",
-      "completed_at": "2025-10-10T15:31:20Z",
-      "duration_seconds": 35,
-      "status": "completed",
-      "api_calls": 7,
-      "entries_fetched": 245
-    },
-    "fibery-enrich": {
-      "started_at": null,
-      "completed_at": null,
-      "duration_seconds": null,
-      "status": "pending"
-    }
-  }
+  "stages_completed": ["toggl", "fibery"],
+  "stages_failed": []
 }
 ```
 
-### 3.2 Toggl Data (`toggl_data.json`)
+### 5.2 Enrichment Configuration
 
-**Purpose:** Complete structured output from Toggl collection step.
+**File:** `config/enrichment_config.yaml`
 
-```json
-{
-  "run_id": "run_2025-10-10-15-30-45",
-  "generated_at": "2025-10-10T15:31:20Z",
-  "date_range": {
-    "start_date": "2025-10-07",
-    "end_date": "2025-10-13"
-  },
-  "summary": {
-    "total_users": 2,
-    "total_entries": 245,
-    "period_duration_seconds": 144000,
-    "period_duration_hours": 40.0,
-    "matched_entries_count": 180,
-    "unmatched_entries_count": 65
-  },
-  "users": [
-    {
-      "user_metadata": {
-        "email": "user1@example.com",
-        "name": "John Doe",
-        "toggl_user_id": 123456
-      },
-      "statistics": {
-        "period_duration_seconds": 72000,
-        "period_duration_hours": 20.0,
-        "matched_duration_seconds": 54000,
-        "unmatched_duration_seconds": 18000,
-        "matched_percentage": 75.0,
-        "unmatched_percentage": 25.0,
-        "total_entries": 120,
-        "matched_entities_count": 15,
-        "unmatched_activities_count": 8
-      },
-      "matched_entities": [
-        {
-          "fibery_metadata": {
-            "entity_id": "1234",
-            "public_id": "#1234",
-            "entity_database": "Scrum",
-            "entity_type": "Task",
-            "entity_name": "Fix authentication bug",
-            "project": "AuthService"
-          },
-          "time_tracking": {
-            "time_spent_seconds": 7200,
-            "time_spent_hours": 2.0,
-            "entry_count": 3,
-            "first_logged": "2025-10-07T09:00:00Z",
-            "last_logged": "2025-10-09T16:30:00Z"
-          }
-        }
-      ],
-      "unmatched_activities": [
-        {
-          "description": "Team standup meeting",
-          "time_tracking": {
-            "total_duration_seconds": 900,
-            "total_duration_hours": 0.25,
-            "entry_count": 5,
-            "first_logged": "2025-10-07T10:00:00Z",
-            "last_logged": "2025-10-11T10:00:00Z"
-          }
-        }
-      ]
-    }
-  ]
-}
-```
+```yaml
+enrichment_activities:
+  # Scrum entities
+  "Scrum/Task":
+    activity: enrich_scrum_task
+    max_concurrent: 5
+    fields:
+      - Story Points
+      - Sprint
+      - Epic
+      - Acceptance Criteria
 
-### 3.3 Fibery Enriched Data (`fibery_enriched.json`)
+  "Scrum/Bug":
+    activity: enrich_scrum_bug
+    max_concurrent: 5
+    fields:
+      - Severity
+      - Steps to Reproduce
+      - Root Cause
 
-**Purpose:** Toggl data enriched with Fibery metadata and LLM summaries.
+  # Product entities
+  "Product/Feature":
+    activity: enrich_product_feature
+    max_concurrent: 3
+    fields:
+      - Product Area
+      - Customer Requests
+      - Revenue Impact
+      - Launch Date
 
-```json
-{
-  "run_id": "run_2025-10-10-15-30-45",
-  "generated_at": "2025-10-10T15:35:45Z",
-  "based_on": {
-    "toggl_data_file": "toggl_data.json",
-    "toggl_generated_at": "2025-10-10T15:31:20Z"
-  },
-  "enrichment_summary": {
-    "total_entities_to_enrich": 25,
-    "successfully_enriched": 23,
-    "not_found_in_fibery": 2,
-    "api_calls_made": 25
-  },
-  "users": [
-    {
-      "user_metadata": {
-        "email": "user1@example.com",
-        "name": "John Doe",
-        "toggl_user_id": 123456
-      },
-      "statistics": {
-        // Same as toggl_data.json
-        "period_duration_seconds": 72000,
-        "period_duration_hours": 20.0,
-        "matched_duration_seconds": 54000,
-        "unmatched_duration_seconds": 18000,
-        "matched_percentage": 75.0,
-        "unmatched_percentage": 25.0,
-        "total_entries": 120,
-        "matched_entities_count": 15,
-        "unmatched_activities_count": 8
-      },
-      "matched_entities": [
-        {
-          "fibery_metadata": {
-            "entity_id": "1234",
-            "public_id": "#1234",
-            "entity_database": "Scrum",
-            "entity_type": "Task",
-            "entity_name": "Fix authentication bug",
-            "project": "AuthService"
-          },
-          "time_tracking": {
-            // From toggl_data.json
-            "time_spent_seconds": 7200,
-            "time_spent_hours": 2.0,
-            "entry_count": 3,
-            "first_logged": "2025-10-07T09:00:00Z",
-            "last_logged": "2025-10-09T16:30:00Z"
-          },
-          "fibery_enrichment": {
-            "enrichment_status": "success",  // "success", "not_found", "api_error"
-            "enriched_at": "2025-10-10T15:32:10Z",
-            "fibery_data": {
-              "state": {
-                "current": "In Progress",
-                "history": [
-                  {"state": "Backlog", "date": "2025-10-01"},
-                  {"state": "In Progress", "date": "2025-10-07"}
-                ]
-              },
-              "dates": {
-                "created_at": "2025-10-01T12:00:00Z",
-                "started_at": "2025-10-07T09:00:00Z",
-                "completed_at": null,
-                "due_date": "2025-10-15T00:00:00Z"
-              },
-              "content": {
-                "has_description": true,
-                "description_length": 350,
-                "description_preview": "Authentication system is failing when...",
-                "has_comments": true,
-                "comments_count": 3,
-                "recent_comments": [
-                  {
-                    "author": "Jane Smith",
-                    "created_at": "2025-10-08T14:30:00Z",
-                    "text_preview": "Found the root cause in..."
-                  }
-                ]
-              },
-              "relationships": {
-                "parent_feature": {
-                  "id": "5678",
-                  "name": "Authentication Overhaul",
-                  "type": "Feature"
-                },
-                "assignees": ["John Doe", "Jane Smith"],
-                "priority": "High",
-                "labels": ["backend", "security", "urgent"]
-              },
-              "time_data": {
-                "fibery_time_spent_seconds": 8100,  // If Fibery tracks time separately
-                "estimated_seconds": 14400
-              }
-            }
-          }
-        }
-      ],
-      "unmatched_activities": [
-        {
-          "description": "Team standup meeting",
-          "time_tracking": {
-            "time_spent_seconds": 900,
-            "time_spent_hours": 0.25,
-            "entry_count": 5,
-            "first_logged": "2025-10-07T10:00:00Z",
-            "last_logged": "2025-10-11T10:00:00Z"
-          }
-        }
-      ]
-    }
-  ]
-}
+  # Default for all other types
+  default:
+    activity: default_enrich_entity
+    max_concurrent: 5
+    fields:
+      - State
+      - Dates
+      - Description
+      - Comments
+      - Assignees
 ```
 
 ---
 
-## 4. Command-Line Interface
+## 6. Command-Line Interface
 
-### 4.1 Command Structure
-
-**Base Command:**
-```bash
-volt-agent [COMMAND] [OPTIONS]
-```
-
-### 4.2 Step 1: Toggl Collection
+### 6.1 Main Pipeline Command
 
 ```bash
-volt-agent toggl-collect \
+# Start from beginning (Toggl collection)
+volt-agent run \
   --start-date YYYY-MM-DD \
   --end-date YYYY-MM-DD \
   [--users email1@example.com,email2@example.com] \
-  [--output-dir ./tmp/runs] \
-  [--config ./config/config.yaml]
+  [--output-dir ./tmp/runs]
+
+# Start from Fibery enrichment (re-run enrichment only)
+volt-agent run \
+  --start-from fibery \
+  --run-id run_2025-10-10-15-30-45
 ```
 
 **Options:**
-- `--start-date` (required): Start date of reporting period
-- `--end-date` (required): End date of reporting period
-- `--users` (optional): Comma-separated user emails (default: all users in workspace)
+- `--start-date` (required if start-from=toggl): Start date of reporting period
+- `--end-date` (required if start-from=toggl): End date of reporting period
+- `--users` (optional): Comma-separated user emails (default: all users)
+- `--start-from` (optional): Stage to start from (default: toggl)
+  - `toggl`: Start from Toggl collection (full pipeline)
+  - `fibery`: Start from Fibery enrichment (requires --run-id)
+- `--run-id` (required if start-from=fibery): Existing run ID to enrich
 - `--output-dir` (optional): Base directory for runs (default: `./tmp/runs`)
-- `--config` (optional): Path to config file (default: `./config/config.yaml`)
 
-**Example:**
+**Examples:**
 ```bash
-# Collect data for current week, all users
-volt-agent toggl-collect \
-  --start-date 2025-10-07 \
-  --end-date 2025-10-13
+# Initial run: collect Toggl data and enrich
+volt-agent run --start-date 2025-10-07 --end-date 2025-10-13
 
-# Output:
-# ✓ Run created: run_2025-10-10-15-30-45
-# ✓ Fetching Toggl data...
-#   ├─ Day 1/7: 35 entries
-#   ├─ Day 2/7: 40 entries
-#   └─ ... 
-# ✓ Parsing entity metadata...
-# ✓ Aggregating data by user...
-# ✓ Writing JSON output...
-# ✓ Generating markdown report...
-# 
-# ✅ Step 1 complete!
-#    Run ID: run_2025-10-10-15-30-45
-#    Location: ./tmp/runs/run_2025-10-10-15-30-45/step_1_toggl_collection/
-#    Total entries: 245
-#    Total users: 12
-#    Duration: 35 seconds
-#
-# Next step:
-#    volt-agent fibery-enrich --run-id run_2025-10-10-15-30-45
+# Re-run Fibery enrichment only (e.g., after config changes)
+volt-agent run --start-from fibery --run-id run_2025-10-10-15-30-45
+
+# Run for specific users only
+volt-agent run --start-date 2025-10-07 --end-date 2025-10-13 \
+  --users john@example.com,jane@example.com
 ```
 
-### 4.3 Step 2: Fibery Enrichment
+### 6.2 Progress Display
 
-```bash
-volt-agent fibery-enrich \
-  --run-id RUN_ID \
-  [--config ./config/config.yaml]
+```
+╭──────────────────────────────────────────────────────────────╮
+│ Toggl-Fibery Pipeline                                        │
+│ Run ID: run_2025-10-10-15-30-45                             │
+│ Stage: Fibery Enrichment                                     │
+╰──────────────────────────────────────────────────────────────╯
+
+[Activity 6/9] Enriching entities by type
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 68% | ETA: 2m 15s
+
+Details:
+  ├─ Current: Scrum/Task (15/20 entities)
+  ├─ Completed: Scrum/Bug (8/8 entities)
+  ├─ Remaining: Product/Feature (12 entities)
+  ├─ Elapsed: 3m 42s
+  └─ Rate: 0.45 entities/sec
+
+Press 'q' to quit monitoring (workflow continues in background)
+Press 'd' for detailed view in Temporal UI
 ```
 
-**Options:**
-- `--run-id` (required): Run ID from Step 1
-- `--config` (optional): Path to config file
-
-**Example:**
-```bash
-volt-agent fibery-enrich --run-id run_2025-10-10-15-30-45
-
-# Output:
-# ✓ Loading run: run_2025-10-10-15-30-45
-# ✓ Reading step_1_toggl_collection/toggl_data.json...
-# ✓ Found 25 entities to enrich
-# ✓ Fetching Fibery data...
-#   ├─ Entity #1234: ✓ Success
-#   ├─ Entity #1235: ✓ Success
-#   ├─ Entity #1236: ⚠ Not found
-#   └─ ... 
-# ✓ Generating LLM summaries...
-#   ├─ User: john@example.com ✓
-#   └─ ...
-# ✓ Writing enriched JSON...
-# ✓ Generating markdown report...
-# 
-# ✅ Step 2 complete!
-#    Run ID: run_2025-10-10-15-30-45
-#    Successfully enriched: 23/25 entities
-#    Duration: 45 seconds
-```
-
-### 4.4 Full Pipeline Execution
-
-```bash
-volt-agent run-full \
-  --start-date YYYY-MM-DD \
-  --end-date YYYY-MM-DD \
-  [--users email1@example.com,email2@example.com] \
-  [--output-dir ./tmp/runs] \
-  [--config ./config/config.yaml]
-```
-
-**Options:**
-- Same as `toggl-collect` (since it starts the pipeline)
-
-**Example:**
-```bash
-volt-agent run-full \
-  --start-date 2025-10-07 \
-  --end-date 2025-10-13
-
-# Output:
-# ══════════════════════════════════════════
-# FULL PIPELINE EXECUTION
-# ══════════════════════════════════════════
-#
-# [Step 1/2] Toggl Collection
-# ✓ Run created: run_2025-10-10-15-30-45
-# ✓ Fetching Toggl data... (35 seconds)
-# ✓ Step 1 complete
-#
-# [Step 2/2] Fibery Enrichment
-# ✓ Loading run data...
-# ✓ Enriching entities... (45 seconds)
-# ✓ Step 2 complete
-#
-# ══════════════════════════════════════════
-# ✅ PIPELINE COMPLETE
-# ══════════════════════════════════════════
-#    Run ID: run_2025-10-10-15-30-45
-#    Location: ./tmp/runs/run_2025-10-10-15-30-45/
-#    Total duration: 80 seconds
-#
-# Reports generated:
-#    - toggl_summary.md
-#    - fibery_summary.md
-```
-
-### 4.5 Utility Commands
+### 6.3 Utility Commands
 
 ```bash
 # List all runs
@@ -585,909 +769,249 @@ volt-agent list-runs [--limit 10] [--status completed|failed|in_progress]
 # Show run details
 volt-agent show-run --run-id RUN_ID
 
-# Clean up old runs
-volt-agent cleanup-runs --older-than 30d [--dry-run]
+# Cancel running workflow
+volt-agent cancel-run --run-id RUN_ID
 
-# Validate a run's data integrity
-volt-agent validate-run --run-id RUN_ID
+# Open Temporal UI for run
+volt-agent temporal-ui --run-id RUN_ID
 ```
 
 ---
 
-## 5. File Structure
+## 7. File Structure
 
-### 5.1 Directory Layout
+### 7.1 Directory Layout
 
 ```
 volt-agent/
 ├── tmp/
 │   └── runs/
-│       └── run_2025-10-10-15-30-45/           # Run directory
-│           ├── run_metadata.json              # Run metadata (root level)
-│           │
-│           ├── step_1_toggl_collection/       # Step 1 outputs
-│           │   ├── toggl_data.json            # Step 1 data
-│           │   ├── reports/                   # Step 1 reports
-│           │   │   ├── toggl_summary.md
-│           │   │   └── individual/            # Per-user reports
-│           │   │       ├── john_doe.md
-│           │   │       └── jane_smith.md
-│           │   └── logs/
-│           │       └── toggl_collection.log
-│           │
-│           └── step_2_fibery_enrichment/      # Step 2 outputs
-│               ├── fibery_enriched.json       # Step 2 data
-│               ├── reports/                   # Step 2 reports
-│               │   ├── fibery_summary.md
-│               │   └── individual/            # Per-user enriched reports
-│               │       ├── john_doe.md
-│               │       └── jane_smith.md
-│               └── logs/
-│                   └── fibery_enrichment.log
+│       └── run_2025-10-10-15-30-45/
+│           ├── run_metadata.json
+│           ├── raw_toggl_data.json
+│           ├── toggl_aggregated.json
+│           ├── enriched_data.json
+│           └── reports/
+│               ├── toggl_summary.md
+│               ├── team_summary.md
+│               └── individual/
+│                   ├── john_doe.md
+│                   └── jane_smith.md
 ├── src/
-│   ├── cli.py                                 # CLI entry point
-│   ├── commands/                              # Command implementations
+│   ├── cli.py
+│   ├── workflows/
 │   │   ├── __init__.py
-│   │   ├── toggl_collect.py                   # Step 1
-│   │   ├── fibery_enrich.py                   # Step 2
-│   │   ├── run_full.py                        # Full pipeline
-│   │   └── utils.py                           # Utility commands
-│   ├── pipeline/                              # Pipeline framework
+│   │   └── pipeline_workflow.py         # Temporal workflow
+│   ├── activities/
 │   │   ├── __init__.py
-│   │   ├── step.py                            # Base step class
-│   │   ├── runner.py                          # Pipeline runner
-│   │   └── run_manager.py                     # Run lifecycle management
-│   ├── storage/                               # JSON storage layer
+│   │   ├── cleanup_activities.py        # Cleanup activities
+│   │   ├── toggl_activities.py          # Activities 1-3
+│   │   ├── fibery_activities.py         # Activity 5
+│   │   ├── enrichment/
+│   │   │   ├── __init__.py
+│   │   │   ├── scrum_task.py            # enrich_scrum_task
+│   │   │   ├── scrum_bug.py             # enrich_scrum_bug
+│   │   │   ├── product_feature.py       # enrich_product_feature
+│   │   │   └── default.py               # default_enrich_entity
+│   │   └── reporting_activities.py      # Activities 7-9
+│   ├── patterns/
 │   │   ├── __init__.py
-│   │   ├── json_storage.py                    # JSON read/write utilities
-│   │   └── schemas.py                         # Pydantic models for validation
-│   ├── toggl/                                 # Existing Toggl client
-│   ├── fibery/                                # Existing Fibery client
-│   ├── parser/                                # Existing parser
-│   └── llm/                                   # Existing LLM client
+│   │   └── rolling_window.py            # Rolling window implementation
+│   ├── worker.py                        # Temporal worker
+│   ├── storage/
+│   │   ├── __init__.py
+│   │   ├── json_storage.py
+│   │   └── schemas.py
+│   ├── toggl/                           # Existing clients
+│   ├── fibery/
+│   └── llm/
+├── docker-compose.yml                   # Temporal + dependencies
 └── config/
-    └── config.yaml                            # Configuration
+    ├── config.yaml
+    └── enrichment_config.yaml           # Per-entity-type config
 ```
 
-### 5.2 File Naming Conventions
+### 7.2 Temporal Worker Structure
 
-**Run ID Format:**
-```
-run_YYYY-MM-DD-HH-MM-SS
-```
+```python
+# src/worker.py
+from temporalio.client import Client
+from temporalio.worker import Worker
+from activities.cleanup_activities import cleanup_toggl_stage, cleanup_fibery_stage
+from activities.toggl_activities import fetch_toggl_data, aggregate_toggl_data, generate_toggl_report
+from activities.fibery_activities import extract_fibery_entities, enrich_entities_by_type
+from activities.reporting_activities import generate_person_reports, save_enriched_data, generate_team_report
+from activities.enrichment import (
+    enrich_scrum_task,
+    enrich_scrum_bug,
+    enrich_product_feature,
+    default_enrich_entity
+)
 
-**Run Directory:**
-```
-tmp/runs/{run_id}/
-```
+async def main():
+    client = await Client.connect("localhost:7233")
 
-**Directory Structure:**
-```
-{run_id}/
-├── run_metadata.json                                    # Always present (root level)
-├── step_1_toggl_collection/                             # Step 1 directory
-│   ├── toggl_data.json                                  # Step 1 output
-│   ├── reports/toggl_summary.md
-│   └── logs/toggl_collection.log
-├── step_2_fibery_enrichment/                            # Step 2 directory
-│   ├── fibery_enriched.json                             # Step 2 output
-│   ├── reports/fibery_summary.md
-│   └── logs/fibery_enrichment.log
-└── step_N_*/                                            # Future steps
-    ├── *.json
-    ├── reports/
-    └── logs/
+    worker = Worker(
+        client,
+        task_queue="volt-agent-pipeline",
+        workflows=[TogglFiberyPipeline],
+        activities=[
+            # Cleanup
+            cleanup_toggl_stage,
+            cleanup_fibery_stage,
+            # Toggl
+            fetch_toggl_data,
+            aggregate_toggl_data,
+            generate_toggl_report,
+            # Fibery
+            extract_fibery_entities,
+            enrich_entities_by_type,
+            # Enrichment (type-specific)
+            enrich_scrum_task,
+            enrich_scrum_bug,
+            enrich_product_feature,
+            default_enrich_entity,
+            # Reporting
+            generate_person_reports,
+            save_enriched_data,
+            generate_team_report,
+        ],
+    )
+
+    await worker.run()
 ```
 
 ---
 
-## 6. Functional Requirements
+## 8. Infrastructure
 
-### 6.1 Step 1: Toggl Collection
+### 8.1 Docker Compose Setup
 
-#### FR-TC-1: Data Fetching
-- **Requirement:** Fetch all Toggl time entries for the specified date range
-- **Implementation:** Reuse existing day-by-day chunking logic from v1.0
-- **Acceptance Criteria:**
-  - All time entries fetched without data loss
-  - Handles pagination correctly
-  - Respects rate limits (240 requests/hour)
-  - Graceful error handling for API failures
+**File:** `docker-compose.yml`
 
-#### FR-TC-2: Entity Parsing
-- **Requirement:** Parse Fibery entity metadata from time entry descriptions
-- **Implementation:** Reuse existing regex parser from v1.0
-- **Acceptance Criteria:**
-  - Correctly extracts entity ID (#1234)
-  - Correctly extracts database, type, project from brackets
-  - Handles missing or partial metadata
-  - Handles non-English characters
-
-#### FR-TC-3: Data Aggregation
-- **Requirement:** Group time entries by user, then by matched/unmatched, then by entity/activity
-- **Acceptance Criteria:**
-  - Correct grouping logic
-  - Accurate time summations
-  - No duplicate entries
-  - Preserves raw entry data for reference
-
-#### FR-TC-4: JSON Output
-- **Requirement:** Write structured JSON output conforming to `toggl_data.json` schema
-- **Acceptance Criteria:**
-  - Valid JSON syntax
-  - Conforms to Pydantic schema
-  - Complete data (no missing fields)
-  - Human-readable formatting (indented)
-
-#### FR-TC-5: Markdown Report
-- **Requirement:** Generate human-readable Markdown summary
-- **Acceptance Criteria:**
-  - Shows summary statistics per user
-  - Lists matched entities with time spent
-  - Lists unmatched activities with time spent
-  - Matches or exceeds quality of v1.0 reports
-
-#### FR-TC-6: Run Metadata
-- **Requirement:** Create and maintain run metadata file
-- **Acceptance Criteria:**
-  - Unique run_id generated
-  - Metadata includes all required fields
-  - Status tracking (in_progress, completed, failed)
-  - Step completion tracking
-
-### 6.2 Step 2: Fibery Enrichment
-
-#### FR-FE-1: Data Loading
-- **Requirement:** Load toggl_data.json from step 1 directory of specified run
-- **Acceptance Criteria:**
-  - Validates run exists
-  - Validates step_1_toggl_collection directory exists
-  - Validates toggl_data.json exists and is valid
-  - Handles corrupted JSON gracefully
-
-#### FR-FE-2: Entity Enrichment
-- **Requirement:** Fetch additional metadata from Fibery for each matched entity
-- **Acceptance Criteria:**
-  - Fetches all specified fields (state, dates, description, comments, relationships)
-  - Handles entities not found in Fibery gracefully
-  - Handles API errors with retry logic
-  - Respects Fibery API rate limits
-
-#### FR-FE-3: LLM Summarization
-- **Requirement:** Generate intelligent summaries per user using LLM
-- **Implementation:** Reuse existing LLM integration from v1.0
-- **Acceptance Criteria:**
-  - Generates overall summary per user
-  - Generates matched entities summary
-  - Generates unmatched activities summary
-  - Summaries are comprehensive and accurate
-
-#### FR-FE-4: JSON Output
-- **Requirement:** Write enriched JSON output conforming to `fibery_enriched.json` schema
-- **Acceptance Criteria:**
-  - Valid JSON syntax
-  - Conforms to Pydantic schema
-  - Includes all toggl_data + Fibery enrichment
-  - Handles missing enrichment data gracefully
-
-#### FR-FE-5: Markdown Report
-- **Requirement:** Generate human-readable enriched report
-- **Acceptance Criteria:**
-  - Shows all toggl_data information
-  - Shows enriched Fibery metadata per entity
-  - Includes LLM summaries
-  - Matches or exceeds quality of v1.0 reports
-
-#### FR-FE-6: Run Metadata Update
-- **Requirement:** Update run_metadata.json with step 2 completion status
-- **Acceptance Criteria:**
-  - Updates step_metadata for fibery-enrich
-  - Updates steps_completed list
-  - Updates overall status if pipeline complete
-
-### 6.3 Full Pipeline Execution
-
-#### FR-FP-1: Sequential Execution
-- **Requirement:** Execute all pipeline steps sequentially
-- **Acceptance Criteria:**
-  - Step 1 executes first
-  - Step 2 receives run_id from step 1
-  - Steps execute in correct order
-  - Each step completes before next starts
-
-#### FR-FP-2: Error Handling
-- **Requirement:** Handle errors gracefully and provide clear failure points
-- **Acceptance Criteria:**
-  - If step 1 fails, pipeline stops and reports error
-  - If step 2 fails, step 1 data is preserved
-  - run_metadata.json reflects failed step
-  - Clear error messages to user
-
-#### FR-FP-3: Progress Reporting
-- **Requirement:** Provide clear progress indication to user
-- **Acceptance Criteria:**
-  - Shows which step is currently executing
-  - Shows progress within each step
-  - Shows estimated time remaining (if possible)
-  - Clean, formatted console output
-
-### 6.4 Utility Commands
-
-#### FR-UC-1: List Runs
-- **Requirement:** List all runs with filtering options
-- **Acceptance Criteria:**
-  - Shows run_id, date, status, user count
-  - Supports filtering by status
-  - Supports limiting number of results
-  - Sorted by date (newest first)
-
-#### FR-UC-2: Show Run
-- **Requirement:** Display detailed information about a specific run
-- **Acceptance Criteria:**
-  - Shows all run metadata
-  - Shows file sizes
-  - Shows step completion status
-  - Shows statistics
-
-#### FR-UC-3: Cleanup Runs
-- **Requirement:** Delete old runs to free up space
-- **Acceptance Criteria:**
-  - Supports --older-than parameter (days)
-  - Supports --dry-run flag
-  - Asks for confirmation unless --force flag
-  - Reports what was deleted
-
-#### FR-UC-4: Validate Run
-- **Requirement:** Check integrity of a run's data
-- **Acceptance Criteria:**
-  - Validates all JSON files against schemas
-  - Checks for missing files
-  - Validates data consistency
-  - Reports any issues found
-
----
-
-## 7. Non-Functional Requirements
-
-### 7.1 Performance
-
-**NFR-P-1: Execution Speed**
-- Step 1 (Toggl Collection): ≤ 2 minutes for 12 users, 7-day period
-- Step 2 (Fibery Enrichment): ≤ 3 minutes for 150 entities
-- Full Pipeline: ≤ 5 minutes total
-
-**NFR-P-2: File Size**
-- JSON files should be human-readable (indented) but compressed if >10MB
-- Individual report markdown files: ≤ 100KB each
-- Summary reports: ≤ 500KB each
-
-**NFR-P-3: Memory Usage**
-- Peak memory usage: ≤ 512MB for typical workloads
-- Streaming where possible (don't load entire datasets into memory)
-
-### 7.2 Reliability
-
-**NFR-R-1: Data Integrity**
-- All JSON outputs must be valid and schema-compliant
-- No data loss during migration from v1.0 to v2.0
-- Atomic writes (use temp files + rename)
-- Checksums for data validation
-
-**NFR-R-2: Error Recovery**
-- Graceful degradation if APIs unavailable
-- Retry logic with exponential backoff
-- Clear error messages
-- Preserve partial progress on failure
-
-**NFR-R-3: Idempotency**
-- Re-running same step with same inputs produces identical outputs
-- Steps can be re-run without side effects
-- Timestamps may differ but data content identical
-
-### 7.3 Maintainability
-
-**NFR-M-1: Code Organization**
-- Clear separation of concerns
-- Reuse existing v1.0 code where appropriate
-- Well-documented pipeline framework
-- Consistent naming conventions
-
-**NFR-M-2: Testing**
-- Unit tests for all new pipeline code
-- Integration tests for full pipeline
-- Test coverage ≥ 80%
-- Mock external APIs in tests
-
-**NFR-M-3: Logging**
-- Structured logging with log levels
-- Per-step log files
-- Debug mode for verbose output
-- Log rotation for long-running processes
-
-### 7.4 Extensibility
-
-**NFR-E-1: New Steps**
-- Easy to add new pipeline steps
-- Base `Step` class with clear interface
-- Automatic run metadata updates
-- Automatic CLI command generation
-
-**NFR-E-2: Configuration**
-- All configurable values in config.yaml
-- Environment variable overrides
-- Schema validation for config
-
-### 7.5 Usability
-
-**NFR-U-1: CLI Experience**
-- Clear, helpful error messages
-- Colorized output (using `rich` library)
-- Progress bars for long operations
-- Helpful examples in `--help` output
-
-**NFR-U-2: Documentation**
-- README with quick start guide
-- Detailed docs for each command
-- Migration guide from v1.0
-- Examples for common use cases
-
----
-
-## 8. Migration Strategy
-
-### 8.1 Migration Goals
-
-1. **Preserve existing functionality** - No features lost
-2. **Backward compatibility** - Option to run v1.0 mode during transition
-3. **Data migration** - Convert existing SQLite data to JSON (optional)
-4. **Smooth transition** - Users can gradually adopt new commands
-
-### 8.2 Migration Phases
-
-#### Phase 1: Foundation (Week 1)
-- ✅ Create pipeline framework (`Step` class, `Runner`, `RunManager`)
-- ✅ Create JSON storage layer with Pydantic schemas
-- ✅ Create new CLI structure with new commands
-- ✅ Keep existing v1.0 code working
-
-#### Phase 2: Step 1 Implementation (Week 2)
-- ✅ Implement `toggl-collect` command
-- ✅ Reuse existing Toggl client, parser
-- ✅ Write JSON output with new schema
-- ✅ Generate markdown reports
-- ✅ Test against v1.0 for parity
-
-#### Phase 3: Step 2 Implementation (Week 3)
-- ✅ Implement `fibery-enrich` command
-- ✅ Reuse existing Fibery client, LLM client
-- ✅ Write enriched JSON output
-- ✅ Generate enriched markdown reports
-- ✅ Test against v1.0 for parity
-
-#### Phase 4: Full Pipeline (Week 4)
-- ✅ Implement `run-full` command
-- ✅ Implement utility commands (`list-runs`, `show-run`, etc.)
-- ✅ End-to-end testing
-- ✅ Performance testing
-
-#### Phase 5: Documentation & Cleanup (Week 5)
-- ✅ Update README and docs
-- ✅ Write migration guide
-- ✅ Deprecate v1.0 commands (with warnings)
-- ✅ Optional: Data migration tool for existing SQLite data
-
-### 8.3 Backward Compatibility
-
-**Option 1: Dual Mode**
-```bash
-# Old way (still works, shows deprecation warning)
-python generate_report.py --start-date 2025-10-07 --end-date 2025-10-13
-
-# New way
-volt-agent run-full --start-date 2025-10-07 --end-date 2025-10-13
-```
-
-**Option 2: Adapter Layer**
-- Keep old CLI interface
-- Internally call new pipeline
-- Output both SQLite and JSON for transition period
-
-### 8.4 Data Migration Tool
-
-**Optional Command:**
-```bash
-volt-agent migrate-from-sqlite \
-  --sqlite-db ./data/toggl_cache.db \
-  --run-id run_2025-10-10-15-30-45 \
-  [--output-dir ./tmp/runs]
-```
-
-**Purpose:** Convert existing SQLite run data to new JSON format
-
----
-
-## 9. Future Enhancements
-
-### 9.1 Additional Pipeline Steps (Post-v2.0)
-
-#### Step 3: Analytics & Insights
-- Statistical analysis of work patterns
-- Trend detection over multiple weeks
-- Team productivity metrics
-- Anomaly detection
-
-#### Step 4: Report Generation
-- Customizable report templates
-- Multi-format output (PDF, HTML, JSON)
-- Client-facing reports
-- Executive summaries
-
-#### Step 5: Integration Steps
-- Push to Slack/Teams
-- Update Fibery with time tracking data
-- Sync to data warehouse
-- Trigger automation workflows
-
-### 9.2 Interactive Console UI
-
-**Future Command:**
-```bash
-volt-agent ui
-```
-
-**Features:**
-- TUI (Terminal UI) using `textual` or `rich`
-- Interactive step selection
-- Live progress visualization
-- Browse past runs
-- View reports in terminal
-
-**Mock UI:**
-```
-╔══════════════════════════════════════════════════════════════╗
-║                    VOLT-AGENT PIPELINE                        ║
-╠══════════════════════════════════════════════════════════════╣
-║                                                              ║
-║  Select Pipeline Step:                                       ║
-║                                                              ║
-║  ▶ Run Full Pipeline                                         ║
-║    Step 1: Toggl Collection                                  ║
-║    Step 2: Fibery Enrichment                                 ║
-║    ---------------------------------                         ║
-║    View Past Runs                                            ║
-║    Settings                                                  ║
-║    Exit                                                      ║
-║                                                              ║
-╠══════════════════════════════════════════════════════════════╣
-║  Recent Runs:                                                ║
-║  • run_2025-10-10-15-30-45 [COMPLETED] (2 hours ago)        ║
-║  • run_2025-10-09-10-15-30 [COMPLETED] (1 day ago)          ║
-║  • run_2025-10-08-14-20-15 [FAILED]    (2 days ago)         ║
-╚══════════════════════════════════════════════════════════════╝
-
-Use ↑↓ arrows to navigate, Enter to select, Esc to go back
-```
-
-### 9.3 Configuration Profiles
-
-**Feature:** Support multiple configuration profiles
-
-```bash
-# Run with production config
-volt-agent run-full --profile production --start-date 2025-10-07 --end-date 2025-10-13
-
-# Run with development config (uses test Fibery workspace, verbose logging)
-volt-agent run-full --profile dev --start-date 2025-10-07 --end-date 2025-10-13
-```
-
-**Config Structure:**
 ```yaml
-profiles:
-  production:
-    toggl:
-      workspace_id: 123456
-    fibery:
-      workspace_url: "https://company.fibery.io"
-    output:
-      directory: "./reports/production"
-  
-  dev:
-    toggl:
-      workspace_id: 789012
-    fibery:
-      workspace_url: "https://company-dev.fibery.io"
-    output:
-      directory: "./tmp/dev"
-    logging:
-      level: DEBUG
+version: '3.8'
+
+services:
+  temporal:
+    image: temporalio/auto-setup:latest
+    ports:
+      - "7233:7233"
+    environment:
+      - DB=postgresql
+      - DB_PORT=5432
+      - POSTGRES_USER=temporal
+      - POSTGRES_PWD=temporal
+      - POSTGRES_SEEDS=postgresql
+    depends_on:
+      - postgresql
+
+  temporal-ui:
+    image: temporalio/ui:latest
+    ports:
+      - "8080:8080"
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+    depends_on:
+      - temporal
+
+  postgresql:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: temporal
+      POSTGRES_PASSWORD: temporal
+      POSTGRES_DB: temporal
+    ports:
+      - "5432:5432"
+    volumes:
+      - temporal-postgres:/var/lib/postgresql/data
+
+  temporal-admin-tools:
+    image: temporalio/admin-tools:latest
+    environment:
+      - TEMPORAL_CLI_ADDRESS=temporal:7233
+    depends_on:
+      - temporal
+    stdin_open: true
+    tty: true
+
+volumes:
+  temporal-postgres:
 ```
 
-### 9.4 Scheduling & Automation
-
-**Feature:** Schedule automatic pipeline runs
+### 8.2 Starting the Infrastructure
 
 ```bash
-# Schedule weekly reports every Monday at 9am
-volt-agent schedule add \
-  --name "weekly-team-report" \
-  --command "run-full --start-date {last_monday} --end-date {last_sunday}" \
-  --cron "0 9 * * 1"
+# Start Temporal and dependencies
+docker-compose up -d
 
-# List scheduled jobs
-volt-agent schedule list
+# Verify services are running
+docker-compose ps
 
-# Remove scheduled job
-volt-agent schedule remove --name "weekly-team-report"
+# View Temporal UI
+open http://localhost:8080
+
+# Start Temporal worker
+python -m src.worker
+
+# Run pipeline (from Toggl)
+volt-agent run --start-date 2025-10-07 --end-date 2025-10-13
+
+# Run pipeline (from Fibery only)
+volt-agent run --start-from fibery --run-id run_2025-10-10-15-30-45
 ```
 
-### 9.5 Comparison & Diff Tools
+### 8.3 Temporal Configuration
 
-**Feature:** Compare runs across different time periods
+**Connection Settings:**
+- **Temporal Server:** `localhost:7233`
+- **Temporal UI:** `http://localhost:8080`
+- **Task Queue:** `volt-agent-pipeline`
+- **Namespace:** `default`
 
-```bash
-# Compare this week vs last week
-volt-agent compare \
-  --run-id-1 run_2025-10-10-15-30-45 \
-  --run-id-2 run_2025-10-03-15-30-45 \
-  --output comparison_report.md
-```
-
-**Output:**
-- Time spent changes per user
-- New entities worked on
-- Dropped entities
-- Focus area shifts
-- Productivity trends
-
-### 9.6 Export & Integration
-
-```bash
-# Export to CSV for Excel analysis
-volt-agent export --run-id RUN_ID --format csv --output report.csv
-
-# Export to data warehouse
-volt-agent export --run-id RUN_ID --format bigquery --table team_activity
-
-# Send to Slack
-volt-agent notify --run-id RUN_ID --channel "#team-reports" --format slack
-```
-
-### 9.7 Web Dashboard
-
-**Future Feature:** Web-based dashboard for browsing reports
-
-- Browse all runs
-- View reports in browser
-- Interactive charts
-- Drill-down into individual user data
-- Search and filter
-- Export capabilities
-
----
-
-## 10. Appendices
-
-### Appendix A: Schema Definitions (Pydantic Models)
-
-**File:** `src/storage/schemas.py`
-
+**Worker Configuration:**
 ```python
-from pydantic import BaseModel, Field
-from typing import List, Optional, Literal
-from datetime import datetime
-
-class UserMetadata(BaseModel):
-    email: str
-    name: str
-    toggl_user_id: int
-
-class FiberyMetadata(BaseModel):
-    entity_id: str
-    public_id: str
-    entity_database: str
-    entity_type: str
-    entity_name: str
-    project: str
-
-class TimeTracking(BaseModel):
-    time_spent_seconds: int
-    time_spent_hours: float
-    entry_count: int
-    first_logged: datetime
-    last_logged: datetime
-
-class MatchedEntity(BaseModel):
-    fibery_metadata: FiberyMetadata
-    time_tracking: TimeTracking
-
-class UnmatchedActivity(BaseModel):
-    description: str
-    time_tracking: TimeTracking
-
-class UserStatistics(BaseModel):
-    period_duration_seconds: int
-    period_duration_hours: float
-    matched_duration_seconds: int
-    unmatched_duration_seconds: int
-    matched_percentage: float
-    unmatched_percentage: float
-    total_entries: int
-    matched_entities_count: int
-    unmatched_activities_count: int
-
-class UserData(BaseModel):
-    user_metadata: UserMetadata
-    statistics: UserStatistics
-    matched_entities: List[MatchedEntity]
-    unmatched_activities: List[UnmatchedActivity]
-
-class DateRange(BaseModel):
-    start_date: str
-    end_date: str
-
-class TogglDataSummary(BaseModel):
-    total_users: int
-    total_entries: int
-    period_duration_seconds: int
-    period_duration_hours: float
-    matched_entries_count: int
-    unmatched_entries_count: int
-
-class TogglData(BaseModel):
-    run_id: str
-    generated_at: datetime
-    date_range: DateRange
-    summary: TogglDataSummary
-    users: List[UserData]
-
-class RunParameters(BaseModel):
-    start_date: str
-    end_date: str
-    users_filter: Optional[List[str]]
-    users_count: int
-
-class RunStatistics(BaseModel):
-    total_time_entries: int
-    total_users: int
-    period_duration_seconds: int
-    matched_entries: int
-    unmatched_entries: int
-
-class StepMetadata(BaseModel):
-    started_at: Optional[datetime]
-    completed_at: Optional[datetime]
-    duration_seconds: Optional[int]
-    status: Literal["pending", "in_progress", "completed", "failed"]
-
-class RunMetadata(BaseModel):
-    run_id: str
-    created_at: datetime
-    status: Literal["in_progress", "completed", "failed"]
-    pipeline_version: str
-    steps_completed: List[str]
-    steps_failed: List[str]
-    parameters: RunParameters
-    statistics: RunStatistics
-    step_metadata: dict[str, StepMetadata]
-
-# Additional models for fibery_enriched.json
-# (Similar pattern, extending MatchedEntity with enrichment data)
-```
-
-### Appendix B: Base Step Class
-
-**File:** `src/pipeline/step.py`
-
-```python
-from abc import ABC, abstractmethod
-from typing import Dict, Any
-from pathlib import Path
-import logging
-
-class PipelineStep(ABC):
-    """Base class for all pipeline steps"""
-    
-    def __init__(self, run_id: str, run_dir: Path, config: Dict[str, Any]):
-        self.run_id = run_id
-        self.run_dir = run_dir
-        self.config = config
-        self.logger = logging.getLogger(self.__class__.__name__)
-    
-    @property
-    @abstractmethod
-    def step_name(self) -> str:
-        """Unique name for this step (e.g., 'toggl-collect')"""
-        pass
-    
-    @abstractmethod
-    def execute(self) -> bool:
-        """
-        Execute this pipeline step.
-        
-        Returns:
-            True if step succeeded, False otherwise
-        """
-        pass
-    
-    @abstractmethod
-    def validate_inputs(self) -> bool:
-        """
-        Validate that all required inputs are available.
-        
-        Returns:
-            True if inputs are valid, False otherwise
-        """
-        pass
-    
-    def update_run_metadata(self, status: str, **kwargs):
-        """Update run metadata with this step's status"""
-        # Implementation in base class
-        pass
-    
-    def write_json_output(self, filename: str, data: Any):
-        """Write JSON output with atomic write"""
-        # Implementation in base class
-        pass
-    
-    def write_markdown_output(self, filename: str, content: str):
-        """Write markdown output"""
-        # Implementation in base class
-        pass
-```
-
-### Appendix C: Example Usage Scenarios
-
-**Scenario 1: Weekly Team Report**
-```bash
-# Run every Monday morning for previous week
-volt-agent run-full \
-  --start-date $(date -d "last monday -7 days" +%Y-%m-%d) \
-  --end-date $(date -d "last sunday" +%Y-%m-%d)
-```
-
-**Scenario 2: Re-enrich Existing Data**
-```bash
-# Step 1: Collect Toggl data
-volt-agent toggl-collect --start-date 2025-10-07 --end-date 2025-10-13
-# Output: run_2025-10-10-15-30-45
-
-# Step 2: First enrichment attempt (maybe had API issues)
-volt-agent fibery-enrich --run-id run_2025-10-10-15-30-45
-# Some entities failed to enrich
-
-# Step 2 again: Re-run enrichment after fixing API issues
-volt-agent fibery-enrich --run-id run_2025-10-10-15-30-45 --force
-# All entities enriched successfully
-```
-
-**Scenario 3: Development Testing**
-```bash
-# Collect data once
-volt-agent toggl-collect --start-date 2025-10-07 --end-date 2025-10-13
-
-# Test enrichment step multiple times with different LLM prompts
-volt-agent fibery-enrich --run-id run_2025-10-10-15-30-45 --force
-# Tweak prompt config
-volt-agent fibery-enrich --run-id run_2025-10-10-15-30-45 --force
-# Compare outputs
-```
-
-**Scenario 4: Specific Users Only**
-```bash
-# Weekly report for leadership team only
-volt-agent run-full \
-  --start-date 2025-10-07 \
-  --end-date 2025-10-13 \
-  --users ceo@company.com,cto@company.com,cpo@company.com
-```
-
-### Appendix D: Error Handling Examples
-
-**Scenario: Toggl API Failure**
-```bash
-$ volt-agent toggl-collect --start-date 2025-10-07 --end-date 2025-10-13
-
-✗ Run created: run_2025-10-10-15-30-45
-✗ Fetching Toggl data...
-  ├─ Day 1/7: ✓ 35 entries
-  ├─ Day 2/7: ✗ API Error: 429 Too Many Requests
-  ├─ Retrying in 60 seconds...
-  ├─ Day 2/7: ✗ API Error: 429 Too Many Requests
-  ├─ Retrying in 120 seconds...
-  ├─ Day 2/7: ✓ 40 entries
-  └─ ...
-✓ Step 1 complete!
-```
-
-**Scenario: Invalid Run ID**
-```bash
-$ volt-agent fibery-enrich --run-id invalid_run
-
-✗ Error: Run 'invalid_run' not found
-  
-  Available runs:
-  • run_2025-10-10-15-30-45 (2 hours ago)
-  • run_2025-10-09-10-15-30 (1 day ago)
-  
-  Use 'volt-agent list-runs' to see all runs
-```
-
-**Scenario: Corrupted JSON**
-```bash
-$ volt-agent fibery-enrich --run-id run_2025-10-10-15-30-45
-
-✗ Error: Failed to load toggl_data.json
-  File: ./tmp/runs/run_2025-10-10-15-30-45/toggl_data.json
-  Reason: Invalid JSON syntax at line 245
-  
-  Suggested actions:
-  1. Re-run step 1: volt-agent toggl-collect --start-date ... --end-date ...
-  2. Restore from backup (if available)
-  3. Manually fix JSON file
+worker_config = {
+    "max_concurrent_activities": 10,
+    "max_concurrent_workflow_tasks": 1,
+    "max_concurrent_local_activities": 10,
+}
 ```
 
 ---
 
-## 11. Success Criteria
-
-### 11.1 Feature Completeness
-
-- ✅ All v1.0 functionality preserved
-- ✅ Step 1 (Toggl Collection) working independently
-- ✅ Step 2 (Fibery Enrichment) working independently  
-- ✅ Full pipeline working end-to-end
-- ✅ Utility commands (list, show, cleanup, validate) working
-- ✅ Comprehensive error handling
-
-### 11.2 Quality Metrics
-
-- ✅ Test coverage ≥ 80%
-- ✅ No critical bugs
-- ✅ Performance targets met
-- ✅ All JSON schemas validated
-- ✅ Documentation complete
-
-### 11.3 User Acceptance
-
-- ✅ Users can run full pipeline with single command
-- ✅ Users can run steps independently
-- ✅ Reports match or exceed v1.0 quality
-- ✅ CLI is intuitive and helpful
-- ✅ Migration from v1.0 is smooth
-
----
-
-## 12. Glossary
+## Glossary
 
 | Term | Definition |
 |------|------------|
-| **Pipeline** | Series of data processing steps executed sequentially |
-| **Step** | Individual unit of work in the pipeline |
-| **Run** | Single execution of one or more pipeline steps |
+| **Workflow** | Temporal workflow orchestrating the entire pipeline |
+| **Activity** | Individual unit of work executed by Temporal worker |
+| **Local Activity** | Fast, deterministic activity (file I/O, data transformation) |
+| **Regular Activity** | Activity with external dependencies (API calls) |
+| **Cleanup Activity** | Activity that removes previous stage outputs for idempotency |
+| **Rolling Window** | Parallelism pattern with bounded concurrency |
+| **Task Queue** | Temporal queue where workflow and activity tasks are dispatched |
+| **Worker** | Process that polls task queue and executes activities |
+| **Run** | Single execution of the pipeline workflow |
 | **Run ID** | Unique identifier for a pipeline run |
-| **Run Directory** | File system directory containing all outputs for a run |
-| **JSON Cache** | Structured JSON files storing intermediate pipeline data |
-| **Matched Entity** | Toggl entry with successfully parsed Fibery metadata |
-| **Unmatched Activity** | Toggl entry without Fibery entity reference |
-| **Enrichment** | Process of adding Fibery metadata to Toggl data |
-| **Idempotent** | Operation that produces same result when repeated |
+| **Stage** | Major phase of pipeline (Toggl or Fibery) |
 
 ---
 
-## 13. References
+## References
 
 ### Internal Documents
 - [PRD v1.0: Toggl Team Activity Report Generator](../1-toggl-reports/PRD_Toggl_Team_Activity_Report.md)
 - [PRD: Fibery Reports](../2-fibery-reports/PRD_Core.md)
 
 ### External Documentation
+- [Temporal Documentation](https://docs.temporal.io/)
+- [Temporal Python SDK](https://docs.temporal.io/dev-guide/python)
 - [Toggl API Documentation](https://engineering.toggl.com/docs/reports/detailed_reports/)
 - [Fibery API Documentation](https://api.fibery.io/)
-- [Pydantic Documentation](https://docs.pydantic.dev/)
-- [Click CLI Framework](https://click.palletsprojects.com/)
 - [Rich Library](https://rich.readthedocs.io/)
 
 ---
 
 **End of Document**
-
